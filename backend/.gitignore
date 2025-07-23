@@ -1,0 +1,65 @@
+# Virtual environment
+myenv/
+.venv/
+env/
+ENV/
+.ENV/
+
+# Python bytecode and caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Python egg metadata
+*.egg-info/
+.eggs/
+.mypy_cache/
+.pytest_cache/
+
+# Flask/Python dotenv environment files
+.env
+.env.*
+
+# Instance folder and SQLite/DB files
+instance/
+*.db
+*.sqlite
+*.sqlite3
+backend/instance/
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
+
+# Flask-Migrate migrations
+migrations/
+backend/migrations/
+
+# Editor and system files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Runtime logs and coverage/test results
+logs/
+*.log
+.coverage
+
+# Jupyter/IPython notebooks
+.ipynb_checkpoints/
+
+# Backup and temp files
+*~
+*.bak
+*.tmp
+
+# Python build outputs and wheels
+build/
+dist/
+*.whl
+
+# Secrets (keep only the example!)
+!.env.example

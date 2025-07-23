@@ -1,0 +1,67 @@
+# Python bytecode and cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+myenv/
+.venv/
+env/
+ENV/
+.ENV/
+.venv/
+
+# Python egg metadata and cache
+*.egg-info/
+.eggs/
+.mypy_cache/
+.pytest_cache/
+
+# Jupyter/IPython
+.ipynb_checkpoints/
+
+# Data, models, and results (you can fine-tune by use case)
+data/
+outputs/
+logs/
+models/
+*.csv
+*.tsv
+*.xlsx
+*.xls
+*.parquet
+*.feather
+*.npz
+
+# Trained ML/DL model files (binaries)
+*.h5
+*.pkl
+*.joblib
+*.pt
+*.ckpt
+*.onnx
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# dotenv files and secrets
+.env
+.env.*
+
+# Test artifacts and coverage
+.coverage
+
+# Ignore backup and temp files
+*~
+*.bak
+*.tmp
+
+# (Optional) Remove this comment and "data/", "models/" lines above if you want a tracked sample .csv or model in repo
+# !data/.gitkeep
+# !models/.gitkeep
+
+# Exclude self
+!.gitignore
