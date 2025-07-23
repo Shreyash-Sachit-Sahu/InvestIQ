@@ -3,7 +3,7 @@ import sys
 import logging
 from datetime import datetime
 
-# Make sure src is in path for module imports
+# Add 'src' to sys.path for module imports
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 
 from config import Config
@@ -41,11 +41,11 @@ def main():
         stock_data = collector.fetch_all_stocks()
         logger.info(f"Stock data loaded for {len(stock_data)} stocks.")
 
-        # Phase 2: LSTM Model Training (no GridSearchCV)
-        logger.info("--- LSTM Model Training ---")
+        # Phase 2: LSTM Model Training with GridSearchCV
+        logger.info("--- LSTM Model Training with Grid Search ---")
         trainer = LSTMModelTrainer(config)
-        models, metrics = trainer.train_all_models(stock_data)
-        logger.info(f"Trained {len(models)} models with metrics saved.")
+        models, metrics = trainer.train_all_models(stock_data, use_grid_search=True)
+        logger.info(f"Trained and tuned {len(models)} models with metrics saved.")
 
         # Phase 3: Portfolio Optimization
         logger.info("--- Portfolio Optimization ---")
@@ -72,7 +72,7 @@ def main():
         generate_report(models, portfolios, predictions, metrics, stock_data)
         logger.info("All results and reports saved.")
 
-        # Phase 7: Portfolio Recommender Serialization (for backend)
+        # Phase 7: Portfolio Recommender Serialization
         logger.info("Saving PortfolioRecommender for backend inference.")
         recommender = PortfolioRecommender(config.models_dir, config.selected_stocks, config)
         joblib.dump(recommender, os.path.join(config.models_dir, "portfolio.pkl"))
