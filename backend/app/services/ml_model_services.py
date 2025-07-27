@@ -70,7 +70,7 @@ def get_ai_recommendations(preferences):
     Falls back to mock data if file not found.
     """
 
-    model_dir = current_app.config.get("MODEL_DIR", "../MLmodel/models/")
+    model_dir = current_app.config.get("MODEL_DIR", "../MLmodel/outputs/")
     model_path = os.path.join(model_dir, "predictions.pkl")
 
     if not os.path.exists(model_path):
