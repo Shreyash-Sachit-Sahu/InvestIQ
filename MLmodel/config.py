@@ -15,16 +15,16 @@ class Config:
             "NMDC", "IDFCFIRSTB", "CHOLAFIN", "INDHOTEL", "BERGEPAINT", "TATAPOWER", "GLAND", "LTIM", "TRENT", "VBL"
         ]
         self.selected_stocks = self.indian_stocks
-        self.data_period = "2y"
-        self.train_ratio = 0.8
-        self.lookback_window = 30
-        self.epochs = 60
-        self.batch_size = 32
+        self.data_period = "3y"
+        self.train_ratio = 0.85
+        self.lookback_window = 17
+        self.epochs = 40
+        self.batch_size = 24
         self.validation_split = 0.2
-        self.early_stopping_patience = 10
-        self.risk_free_rate = 0.05
+        self.early_stopping_patience = 15
+        self.risk_free_rate = 0.068
         self.portfolio_methods = ['max_sharpe', 'min_variance', 'risk_parity', 'equal_weight']
-        self.prediction_days = 30
+        self.prediction_days = 2
         self.data_dir = "data"
         self.models_dir = "models"
         self.outputs_dir = "outputs"
