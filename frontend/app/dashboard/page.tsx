@@ -9,13 +9,14 @@ import PortfolioImportDialog from "@/components/PortfolioImportDialog"
 import { Button } from "@/components/ui/button"
 
 export default function Dashboard() {
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
   const [portfolioData, setPortfolioData] = useState([])
   const [chartData, setChartData] = useState({
     labels: [],
     datasets: [],
   })
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  
 
   const handleImportPortfolio = async (method: string, data?: File) => {
   if (method !== 'csv' || !data) {
@@ -35,7 +36,7 @@ export default function Dashboard() {
     const formData = new FormData();
     formData.append('portfolio_csv', data);
 
-    const response = await fetch('${API_BASE_URL}/services/csv_parser', {
+    const response = await fetch(`${API_BASE_URL}/api/portfolio/upload-csv`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`

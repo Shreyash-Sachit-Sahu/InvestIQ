@@ -23,7 +23,7 @@ export default function AIAdvisor() {
       throw new Error("Not authenticated. Please log in.")
     }
 
-    const response = await fetch(`${API_BASE_URL}/services/ml_model_services`,{
+    const response = await fetch(`${API_BASE_URL}/api/ai/recommend-nse`,{
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

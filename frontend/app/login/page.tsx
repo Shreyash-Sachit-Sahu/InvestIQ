@@ -21,7 +21,7 @@ export default function Login() {
 
   try {
     const API_BASE_URL=process.env.NEXT_PUBLIC_API_BASE_URL || '';
-    const response = await fetch('${API_BASE_URL}/auth/login', {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
