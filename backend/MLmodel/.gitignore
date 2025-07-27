@@ -25,7 +25,6 @@ ENV/
 data/
 outputs/
 logs/
-models/
 *.csv
 *.tsv
 *.xlsx
@@ -34,13 +33,7 @@ models/
 *.feather
 *.npz
 
-# Trained ML/DL model files (binaries)
-*.h5
-*.pkl
-*.joblib
-*.pt
-*.ckpt
-*.onnx
+
 
 # OS-generated files
 .DS_Store
