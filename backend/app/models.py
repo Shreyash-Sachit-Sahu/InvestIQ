@@ -7,8 +7,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(240), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(256), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.now(datetime.timezone.ist))
-    updated_at = db.Column(db.DateTime, default=datetime.now(datetime.timezone.ist), onupdate=datetime.now(datetime.timezone.ist))
+    created_at = db.Column(db.DateTime, default=datetime.now(datetime.astimezone.ist))
+    updated_at = db.Column(db.DateTime, default=datetime.now(datetime.astimezone.ist), onupdate=datetime.now(datetime.astimezone.ist))
     portfolios = db.relationship("Portfolio", backref="user", lazy=True)
 
     def set_password(self, password):
@@ -20,8 +20,8 @@ class Portfolio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     name = db.Column(db.String(128), nullable=False, default="Default Portfolio")
-    created_at = db.Column(db.DateTime, default=datetime.now(datetime.timezone.ist))
-    updated_at = db.Column(db.DateTime, default=datetime.now(datetime.timezone.ist), onupdate=datetime.now(datetime.timezone.ist))
+    created_at = db.Column(db.DateTime, default=datetime.now(datetime.astimezone.ist))
+    updated_at = db.Column(db.DateTime, default=datetime.now(datetime.astimezone.ist), onupdate=datetime.now(datetime.astimezone.ist))
     holdings = db.relationship("Holding", backref="portfolio", lazy=True, cascade="all, delete-orphan")
 
 class Holding(db.Model):
@@ -31,8 +31,8 @@ class Holding(db.Model):
     quantity = db.Column(db.Integer, nullable=False)
     average_buy_price = db.Column(db.Float, nullable=False)
     purchase_date = db.Column(db.String(10), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.now(datetime.timezone.ist))
-    updated_at = db.Column(db.DateTime, default=datetime.now(datetime.timezone.ist), onupdate=datetime.now(datetime.timezone.ist))
+    created_at = db.Column(db.DateTime, default=datetime.now(datetime.astimezone.ist))
+    updated_at = db.Column(db.DateTime, default=datetime.now(datetime.astimezone.ist), onupdate=datetime.now(datetime.astimezone.ist))
     __table_args__ = (
         db.UniqueConstraint('portfolio_id', 'symbol', name='uniq_portfolio_symbol'),
     )
