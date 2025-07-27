@@ -35,7 +35,7 @@ export default function Dashboard() {
     const formData = new FormData();
     formData.append('portfolio_csv', data);
 
-    const response = await fetch('${API_BASE_URL}/portfolio/upload-csv', {
+    const response = await fetch('${API_BASE_URL}/services/csv_parser', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`

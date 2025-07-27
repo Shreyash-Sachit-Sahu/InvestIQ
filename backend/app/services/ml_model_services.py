@@ -13,7 +13,7 @@ def get_ai_recommendations(preferences):
     Returns:
         dict: The model's recommendation or a mock output.
     """
-    model_dir = current_app.config.get("MODEL_DIR", "../MLmodel/models/")
+    model_dir = current_app.config.get("MODEL_DIR", "MLmodel/outputs/")
     model_path = os.path.join(model_dir, "portfolio.pkl")
 
     if not os.path.exists(model_path):
