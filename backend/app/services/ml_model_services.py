@@ -1,80 +1,114 @@
 import os
 import joblib
 from flask import current_app
+from datetime import datetime
 
 class PredictionModelWrapper:
     """
-    Wraps a pandas DataFrame loaded from predictions.pkl and
-    exposes a .predict(preferences) method expected by the backend.
+    Wraps the predictions DataFrame and produces recommendations
+    based on user risk tolerance and primary investment goals,
+    coordinating with portfolio strategies (Max Sharpe, Min Variance, etc.).
     """
 
     def __init__(self, predictions_df):
-        self.pred_df = predictions_df
+        self.pred_df = predictions_df  # DataFrame with portfolio strategies as columns and symbols as index
 
     def predict(self, preferences):
-        """
-        Generate AI recommendations based on user preferences.
+        risk_tolerance = preferences.get("risk_tolerance", "").lower()
+        investment_goals = preferences.get("investment_goals", [])
 
-        Args:
-            preferences (dict): User preferences, e.g. risk tolerance, sectors etc.
+        # Map primary investment goals to portfolio strategies
+        goal_to_portfolios = {
+            "capital growth": ["Max Sharpe", "Risk Parity"],
+            "regular income": ["Min Variance"],
+            "balanced growth and income": ["Max Sharpe", "Min Variance"],
+            "capital preservation": ["Min Variance"],
+            "retirement planning": ["Risk Parity", "Max Sharpe"],
+            "elss": ["Max Sharpe"],
+        }
 
-        Returns:
-            dict: AI recommendation results structured for frontend consumption.
-        """
-        # Example simplistic logic: return the top N predicted closes for requested symbols
-        # In practice, you would implement meaningful filtering based on preferences
+        # Collect relevant portfolio strategies for the user's goals
+        relevant_portfolios = set()
+        for goal in investment_goals:
+            strategies = goal_to_portfolios.get(goal.lower())
+            if strategies:
+                relevant_portfolios.update(strategies)
+        if not relevant_portfolios:
+            # Default fallback portfolio
+            relevant_portfolios = {"Max Sharpe"}
 
-        # For demo, just pick top 5 stocks by their latest 'Predicted_Close' value
+        # Attempt to filter predictions for latest date
         try:
-            # Get last date in predictions
             last_date = self.pred_df['Date'].max()
             latest_preds = self.pred_df[self.pred_df['Date'] == last_date]
-
-            # Sort by predicted close descending
-            top_preds = latest_preds.sort_values(by='Predicted_Close', ascending=False).head(5)
-
-            recommendations = []
-            for _, row in top_preds.iterrows():
-                recommendations.append({
-                    "symbol": row.name,  # Index is stock symbol
-                    "date": row['Date'].strftime("%Y-%m-%d"),
-                    "predicted_close": float(row['Predicted_Close']),
-                    "name": f"{row.name} Ltd.",  # You can enhance this from separate lookup
-                    "reasoning": "Strong predicted close according to model",
-                    "confidence": 90  # mocked confidence score
-                })
-
-            return {
-                "portfolio": recommendations,
-                "summary": {
-                    "note": "Top 5 predicted stock closes for latest date",
-                    "count": len(recommendations),
-                },
-                "insights": [
-                    "These stocks have the highest predicted closing prices.",
-                    "Use as a baseline, customize with your risk preferences."
-                ]
-            }
-
         except Exception as e:
-            # fallback or error response
-            return {
-                "error": f"Prediction processing error: {str(e)}"
-            }
+            return {"error": f"Error processing prediction dates: {str(e)}"}
+
+        # Aggregate recommendations from relevant portfolios
+        recommendations = []
+
+        for portfolio_name in relevant_portfolios:
+            if portfolio_name not in latest_preds.columns:
+                # Skip if a portfolio strategy column not present
+                continue
+
+            try:
+                portfolio_weights = latest_preds[latest_preds[portfolio_name] > 0][[portfolio_name]]
+                for symbol, row in portfolio_weights.iterrows():
+                    weight = row[portfolio_name]
+                    recommendations.append({
+                        "symbol": symbol,
+                        "portfolio_strategy": portfolio_name,
+                        "weight": float(weight),
+                        "reasoning": f"Selected from {portfolio_name} portfolio matching your investment goals.",
+                        "confidence": 90  # example confidence
+                    })
+            except Exception:
+                # Continue if error occurs for this portfolio
+                continue
+
+        # Combine recommendations with same symbols by summing weights
+        aggregated_recs = {}
+        for rec in recommendations:
+            sym = rec["symbol"]
+            if sym in aggregated_recs:
+                aggregated_recs[sym]["weight"] += rec["weight"]
+                # Optional: Combine reasoning or confidence if desired
+            else:
+                aggregated_recs[sym] = rec
+
+        # Sort by descending combined weight
+        sorted_recs = sorted(aggregated_recs.values(), key=lambda x: x["weight"], reverse=True)
+
+        # Limit to top 10 recommendations
+        top_recommendations = sorted_recs[:10]
+
+        return {
+            "portfolio": top_recommendations,
+            "summary": {
+                "risk_tolerance": risk_tolerance,
+                "investment_goals": investment_goals,
+                "selected_portfolios": list(relevant_portfolios),
+                "total_recommendations": len(top_recommendations),
+            },
+            "insights": [
+                "Recommendations are aggregated from portfolio strategies aligned to your goals.",
+                "Weights indicate relative significance per portfolio strategy.",
+                "Refine your preferences for more personalized results."
+            ],
+        }
 
 
 def get_ai_recommendations(preferences):
     """
-    Loads the predictions.pkl DataFrame, wraps it,
-    and returns recommendations using the wrapper's predict method.
-    Falls back to mock data if file not found.
+    Loads predictions.pkl and returns AI recommendations based on user preferences.
+    Returns fallback mock data if the file is missing.
     """
-
-    model_dir = current_app.config.get("MODEL_DIR", "../MLmodel/outputs/")
+    model_dir = current_app.config.get("MODEL_DIR", "../MLmodel/models/")
     model_path = os.path.join(model_dir, "predictions.pkl")
 
     if not os.path.exists(model_path):
-        # Fallback mock data for demonstration
+        # Fallback: mock data for demo/testing
         return {
             "portfolio": [
                 {
@@ -110,7 +144,6 @@ def get_ai_recommendations(preferences):
             ]
         }
 
-    # Load predictions DataFrame
-    pred_df = joblib.load(model_path)
-    recommender = PredictionModelWrapper(pred_df)
+    predictions_df = joblib.load(model_path)
+    recommender = PredictionModelWrapper(predictions_df)
     return recommender.predict(preferences)
