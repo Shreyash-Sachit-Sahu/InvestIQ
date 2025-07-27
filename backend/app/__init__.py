@@ -15,6 +15,7 @@ def create_app():
     # Initialize extensions with app
     db.init_app(app)
     JWTManager(app)
+    CORS(app, origins=app.config.get("CORS_ORIGINS"), supports_credentials=True)
     CORS(app, origins=Config.CORS_ORIGINS, supports_credentials=True)
     
     # Health check endpoint for root - responds 200 to GET and HEAD

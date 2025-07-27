@@ -5,6 +5,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
+import { useRouter } from "next/navigation"
 
 const SignupPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,8 @@ const SignupPage: React.FC = () => {
     confirmPassword: "",
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
+  const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -25,6 +28,7 @@ const SignupPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
   e.preventDefault();
   setIsLoading(true);
+  setErrorMessage("");
 
   // Client-side validation
   if (formData.password !== formData.confirmPassword) {
@@ -34,7 +38,8 @@ const SignupPage: React.FC = () => {
   }
 
   try {
-    const response = await fetch('/api/auth/register', {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    const response = await fetch(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -46,7 +51,7 @@ const SignupPage: React.FC = () => {
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       const message = data.error || `Signup failed with status ${response.status}`;
-      alert(message); // Display backend error message
+      setErrorMessage(message); // Display backend error message
       setIsLoading(false);
       return;
     }
@@ -59,11 +64,11 @@ const SignupPage: React.FC = () => {
       password: "",
       confirmPassword: "",
     });
-    // Optionally: redirect to login page here
+    router.push('/login');
 
   } catch (err: any) {
     console.error("Signup error:", err);
-    alert(err.message || "Signup failed.");
+    setErrorMessage(err.message || "Signup failed.");
   } finally {
     setIsLoading(false);
   }

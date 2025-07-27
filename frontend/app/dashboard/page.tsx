@@ -15,6 +15,7 @@ export default function Dashboard() {
     datasets: [],
   })
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
   const handleImportPortfolio = async (method: string, data?: File) => {
   if (method !== 'csv' || !data) {
@@ -34,7 +35,7 @@ export default function Dashboard() {
     const formData = new FormData();
     formData.append('portfolio_csv', data);
 
-    const response = await fetch('/api/portfolio/upload-csv', {
+    const response = await fetch('${API_BASE_URL}/portfolio/upload-csv', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`

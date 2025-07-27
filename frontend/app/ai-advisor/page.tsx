@@ -10,6 +10,7 @@ export default function AIAdvisor() {
   const [recommendations, setRecommendations] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [userPreferences, setUserPreferences] = useState(null)
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
   const handleGetRecommendations = async (preferences: any) => {
   setIsLoading(true)
@@ -22,7 +23,7 @@ export default function AIAdvisor() {
       throw new Error("Not authenticated. Please log in.")
     }
 
-    const response = await fetch('/api/ai/recommend-nse', {
+    const response = await fetch(`${API_BASE_URL}/portfolio/upload-csv`,{
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

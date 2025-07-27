@@ -1,23 +1,27 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { motion } from "framer-motion"
 import Button from "@/components/Button"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 export default function Login() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   setIsLoading(true);
+  setErrorMessage("")
 
   try {
-    const response = await fetch('/api/auth/login', {
+    const API_BASE_URL=process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    const response = await fetch('${API_BASE_URL}/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
@@ -26,7 +30,7 @@ export default function Login() {
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       const message = data.error || `Login failed with status ${response.status}`;
-      alert(message); // or setError(message) for a more advanced UI
+      setErrorMessage(message); // or setError(message) for a more advanced UI
       setIsLoading(false);
       return;
     }
@@ -38,11 +42,11 @@ export default function Login() {
     localStorage.setItem('refresh_token', refresh_token);
 
     // Redirect or update auth state in your app as needed
-    // Example: router.push('/dashboard') if using Next.js
+    router.push('/dashboard');
     alert('Login successful!');
   } catch (err: any) {
     console.error('Login error:', err);
-    alert(err.message || 'Login failed');
+    setErrorMessage(err.message || 'Login failed');
   } finally {
     setIsLoading(false);
   }

@@ -12,4 +12,4 @@ if __name__ == "__main__":
             print(f"Error while creating database tables: {e}")
             sys.exit(1)
 
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False)
