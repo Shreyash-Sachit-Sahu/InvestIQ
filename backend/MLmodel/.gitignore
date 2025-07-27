@@ -23,7 +23,6 @@ ENV/
 
 # Data, models, and results (you can fine-tune by use case)
 data/
-outputs/
 logs/
 *.csv
 *.tsv
