@@ -17,6 +17,7 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
     age: "",
   })
 
+  // Map UI goals to backend expected strings
   const mapPrimaryGoal = (goal: string): string => {
     switch (goal) {
       case "growth":
@@ -36,12 +37,16 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
     }
   }
 
+  // Ensure string coercion for backend compatibility
   const handleSubmit = (e?: React.FormEvent | React.MouseEvent) => {
     if (e) e.preventDefault()
-    onSubmit({
-      investment_goal: mapPrimaryGoal(preferences.primaryGoal),
-      risk_tolerance: preferences.riskTolerance,
-    })
+
+    const payload = {
+      investment_goal: String(mapPrimaryGoal(preferences.primaryGoal) ?? ""),
+      risk_tolerance: String(preferences.riskTolerance ?? ""),
+    }
+
+    onSubmit(payload)
   }
 
   return (
@@ -90,7 +95,7 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
         </div>
       </div>
 
-      {/* Primary Goal */}
+      {/* Primary Investment Goal */}
       <div>
         <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
           <Target className="w-4 h-4 mr-1" />
@@ -130,6 +135,7 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
         </select>
       </div>
 
+      {/* Submit Button */}
       <Button
         text={isLoading ? "AI is analyzing NSE data..." : "Get AI Recommendations"}
         className="w-full btn-primary py-4 text-lg"

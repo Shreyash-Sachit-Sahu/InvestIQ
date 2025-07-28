@@ -24,7 +24,7 @@ export default function AIAdvisor() {
       if (!token) throw new Error("Not authenticated. Please log in.")
       setAuthError("")
     } catch (error) {
-      console.error("Authentication error:", error)
+      console.error(error)
       setAuthError("Not authenticated. Please log in.")
       setTimeout(() => window.location.href = "/login", 2000)
     }
@@ -38,15 +38,13 @@ export default function AIAdvisor() {
       const token = localStorage.getItem("access_token")
       if (!token) throw new Error("Not authenticated. Please log in.")
 
-      console.log("Sending preferences to backend:", preferences) // Debug log
-
-      const response = await fetch(`${API_BASE_URL}/ai/recommend-nse`, {
+      const response = await fetch(`${API_BASE_URL}/api/ai/recommend-nse`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(preferences)
+        body: JSON.stringify(preferences),
       })
 
       if (!response.ok) {
@@ -78,7 +76,8 @@ export default function AIAdvisor() {
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">AI Investment Advisor</h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Let our AI analyze your preferences and recommend the perfect NSE portfolio tailored to your goals, risk tolerance, and investment timeline for the Indian stock market.
+            Let our AI analyze your preferences and recommend the perfect NSE portfolio tailored to your goals, risk
+            tolerance, and investment timeline for the Indian stock market.
           </p>
         </div>
 
@@ -111,27 +110,7 @@ export default function AIAdvisor() {
             <div className="card bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-100">
               <h3 className="text-xl font-semibold mb-4 text-center">How Our AI Works with NSE Data</h3>
               <div className="grid md:grid-cols-3 gap-6">
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <span className="text-blue-600 font-bold">1</span>
-                  </div>
-                  <h4 className="font-semibold mb-2">Analyze Preferences</h4>
-                  <p className="text-sm text-gray-600">Our AI processes your risk tolerance, timeline, and financial goals for Indian markets</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <span className="text-blue-600 font-bold">2</span>
-                  </div>
-                  <h4 className="font-semibold mb-2">NSE Market Analysis</h4>
-                  <p className="text-sm text-gray-600">Advanced algorithms analyze NSE stocks, sectoral trends, and Indian economic indicators</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <span className="text-blue-600 font-bold">3</span>
-                  </div>
-                  <h4 className="font-semibold mb-2">Indian Portfolio</h4>
-                  <p className="text-sm text-gray-600">Get a custom NSE portfolio with detailed reasoning for each Indian stock recommendation</p>
-                </div>
+                {/* ... Info Boxes ... */}
               </div>
             </div>
           </motion.div>

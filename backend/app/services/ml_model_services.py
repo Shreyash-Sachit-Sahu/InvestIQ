@@ -1,9 +1,6 @@
-from flask import Flask, request, jsonify, current_app
 import joblib
 import os
-
-app = Flask(__name__)
-app.config['MODEL_DIR'] = "../MLmodel/outputs/"
+from flask import current_app
 
 class PredictionModelWrapper:
     def __init__(self, predictions_df, portfolios_df):
@@ -20,15 +17,18 @@ class PredictionModelWrapper:
             "elss": ["Max Sharpe"],
         }
 
-        investment_goal = investment_goal.lower() if investment_goal else ""
+        investment_goal = str(investment_goal).lower() if investment_goal else ""
         strategies = goal_to_portfolios.get(investment_goal, ["Max Sharpe"])
 
         if risk_tolerance:
-            risk_tolerance = risk_tolerance.lower()
+            risk_tolerance = str(risk_tolerance).lower()
             allowed_strategies = []
             for strat in strategies:
                 if strat in self.portfolios_df.index:
-                    vol = self.portfolios_df.loc[strat].get("volatility") or self.portfolios_df.loc[strat].get("risk_score")
+                    vol = (
+                        self.portfolios_df.loc[strat].get("volatility")
+                        or self.portfolios_df.loc[strat].get("risk_score")
+                    )
                     if vol is not None:
                         if risk_tolerance == "low" and vol <= 0.1:
                             allowed_strategies.append(strat)
@@ -58,15 +58,21 @@ class PredictionModelWrapper:
                 portfolio_weights = latest_preds[latest_preds[portfolio_name] > 0][[portfolio_name]]
                 for symbol, row in portfolio_weights.iterrows():
                     weight = row[portfolio_name]
-                    portfolio_metrics = self.portfolios_df.loc[portfolio_name].to_dict() if portfolio_name in self.portfolios_df.index else {}
-                    recommendations.append({
-                        "symbol": symbol,
-                        "portfolio_strategy": portfolio_name,
-                        "weight": float(weight),
-                        "reasoning": f"Selected from {portfolio_name} portfolio matching your investment goal.",
-                        "confidence": 90,
-                        "portfolio_metrics": portfolio_metrics
-                    })
+                    portfolio_metrics = (
+                        self.portfolios_df.loc[portfolio_name].to_dict()
+                        if portfolio_name in self.portfolios_df.index
+                        else {}
+                    )
+                    recommendations.append(
+                        {
+                            "symbol": symbol,
+                            "portfolio_strategy": portfolio_name,
+                            "weight": float(weight),
+                            "reasoning": f"Selected from {portfolio_name} portfolio matching your investment goal.",
+                            "confidence": 90,
+                            "portfolio_metrics": portfolio_metrics,
+                        }
+                    )
             except Exception:
                 continue
 
@@ -79,7 +85,9 @@ class PredictionModelWrapper:
             else:
                 aggregated_recs[sym] = rec
 
-        top_recommendations = sorted(aggregated_recs.values(), key=lambda x: x["weight"], reverse=True)[:10]
+        top_recommendations = sorted(
+            aggregated_recs.values(), key=lambda x: x["weight"], reverse=True
+        )[:10]
 
         return {
             "portfolio": top_recommendations,
@@ -92,9 +100,10 @@ class PredictionModelWrapper:
             "insights": [
                 "Recommendations consider both your investment goal and risk tolerance.",
                 "Portfolio metrics are included to provide additional context per strategy.",
-                "Refine your input for more tailored results."
+                "Refine your input for more tailored results.",
             ],
         }
+
 
 def get_ai_recommendations(preferences):
     model_dir = current_app.config.get("MODEL_DIR", "../MLmodel/models/")
@@ -150,30 +159,3 @@ def get_ai_recommendations(preferences):
     risk_tolerance = preferences.get("risk_tolerance")  # Optional
 
     return recommender.predict(investment_goal, risk_tolerance)
-
-@app.route("/ai/recommend-nse", methods=["POST"])
-def ai_recommend_nse():
-    preferences = request.get_json(force=True, silent=True)
-    if not preferences:
-        return jsonify({"error": "Missing or invalid JSON payload"}), 400
-
-    if not isinstance(preferences, dict):
-        return jsonify({"error": "Payload must be a JSON object"}), 400
-
-    investment_goal = preferences.get("investment_goal")
-    if not investment_goal or not isinstance(investment_goal, str) or investment_goal.strip() == "":
-        return jsonify({"error": "Missing or invalid 'investment_goal'"}), 400
-
-    try:
-        recommendations = get_ai_recommendations(preferences)
-    except Exception as e:
-        app.logger.error(f"Error during recommendation processing: {e}")
-        return jsonify({"error": "Internal server error"}), 500
-
-    if isinstance(recommendations, dict) and "error" in recommendations:
-        return jsonify(recommendations), 500
-
-    return jsonify(recommendations)
-
-if __name__ == "__main__":
-    app.run(debug=True)

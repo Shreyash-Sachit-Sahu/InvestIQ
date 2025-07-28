@@ -8,34 +8,24 @@ ai_advisor_bp = Blueprint('ai_advisor', __name__, url_prefix='/api/ai')
 @ai_advisor_bp.route('/recommend-nse', methods=['POST'])
 @jwt_required()
 def recommend_nse():
-    data = request.get_json(force=True, silent=True)
-    current_app.logger.info(f"Received request data for /recommend-nse: {data}")
+    preferences = request.get_json(force=True, silent=True)
+    current_app.logger.info(f"Received preferences: {preferences}")
 
-    if not data:
-        current_app.logger.error("Missing or invalid JSON payload")
+    if not preferences:
         return jsonify({"error": "Missing or invalid JSON payload"}), 400
-
-    if not isinstance(data, dict):
-        current_app.logger.error(f"Payload is not a JSON object: {type(data)}")
+    if not isinstance(preferences, dict):
         return jsonify({"error": "Payload must be a JSON object"}), 400
-
-    investment_goal = data.get("investment_goal")
-    if not investment_goal or not isinstance(investment_goal, str) or not investment_goal.strip():
-        current_app.logger.error(f"Missing or invalid 'investment_goal': {investment_goal}")
+    investment_goal = preferences.get("investment_goal")
+    if not investment_goal or not isinstance(investment_goal, str) or investment_goal.strip() == "":
         return jsonify({"error": "Missing or invalid 'investment_goal'"}), 400
 
     try:
-        recs = get_ai_recommendations(data)
-    except FileNotFoundError as e:
-        current_app.logger.error(f"File not found error: {e}")
-        return jsonify({"error": str(e)}), 500
+        recommendations = get_ai_recommendations(preferences)
     except Exception as e:
-        current_app.logger.exception(f"ML model error: {e}")
-        return jsonify({"error": f"ML model error: {str(e)}"}), 500
+        current_app.logger.error(f"Error during recommendation: {e}")
+        return jsonify({"error": "Internal server error"}), 500
 
-    if isinstance(recs, dict) and "error" in recs:
-        err_msg = recs.get("error")
-        current_app.logger.error(f"Recommendation error: {err_msg}")
-        return jsonify({"error": str(err_msg)}), 500
+    if isinstance(recommendations, dict) and "error" in recommendations:
+        return jsonify({"error": str(recommendations.get("error"))}), 500
 
-    return jsonify(recs), 200
+    return jsonify(recommendations)
