@@ -1,24 +1,24 @@
-import os
+from flask import Flask, request, jsonify, current_app
 import joblib
-from flask import current_app
-from datetime import datetime
-import pickle
+import os
+
+app = Flask(__name__)
+
+# Configure your model directory here or via Flask config
+app.config['MODEL_DIR'] = "../MLmodel/outputs/"  # Adjust path as needed
+
 
 class PredictionModelWrapper:
     """
-    Wraps the predictions DataFrame and produces recommendations
-    based on user risk tolerance and primary investment goals,
-    coordinating with portfolio strategies (Max Sharpe, Min Variance, etc.).
+    Wraps the predictions DataFrame and portfolios metadata,
+    and produces recommendations based on user investment goal and risk tolerance.
     """
 
-    def __init__(self, predictions_df):
-        self.pred_df = predictions_df  # DataFrame with portfolio strategies as columns and symbols as index
+    def __init__(self, predictions_df, portfolios_df):
+        self.pred_df = predictions_df
+        self.portfolios_df = portfolios_df
 
-    def predict(self, preferences):
-        risk_tolerance = preferences.get("risk_tolerance", "").lower()
-        investment_goals = preferences.get("investment_goals", [])
-
-        # Map primary investment goals to portfolio strategies
+    def predict(self, investment_goal, risk_tolerance=None):
         goal_to_portfolios = {
             "capital growth": ["Max Sharpe", "Risk Parity"],
             "regular income": ["Min Variance"],
@@ -28,88 +28,94 @@ class PredictionModelWrapper:
             "elss": ["Max Sharpe"],
         }
 
-        # Collect relevant portfolio strategies for the user's goals
-        relevant_portfolios = set()
-        for goal in investment_goals:
-            strategies = goal_to_portfolios.get(goal.lower())
-            if strategies:
-                relevant_portfolios.update(strategies)
-        if not relevant_portfolios:
-            # Default fallback portfolio
-            relevant_portfolios = {"Max Sharpe"}
+        investment_goal = investment_goal.lower() if investment_goal else ""
+        strategies = goal_to_portfolios.get(investment_goal, ["Max Sharpe"])
 
-        # Attempt to filter predictions for latest date
+        if risk_tolerance:
+            risk_tolerance = risk_tolerance.lower()
+            allowed_strategies = []
+            for strat in strategies:
+                if strat in self.portfolios_df.index:
+                    vol = self.portfolios_df.loc[strat].get("volatility") or self.portfolios_df.loc[strat].get("risk_score")
+                    if vol is not None:
+                        if risk_tolerance == "low" and vol <= 0.1:
+                            allowed_strategies.append(strat)
+                        elif risk_tolerance == "medium" and vol <= 0.2:
+                            allowed_strategies.append(strat)
+                        elif risk_tolerance == "high":
+                            allowed_strategies.append(strat)
+                    else:
+                        allowed_strategies.append(strat)
+                else:
+                    allowed_strategies.append(strat)
+            if allowed_strategies:
+                strategies = allowed_strategies
+
         try:
-            last_date = self.pred_df['Date'].max()
-            latest_preds = self.pred_df[self.pred_df['Date'] == last_date]
+            last_date = self.pred_df["Date"].max()
+            latest_preds = self.pred_df[self.pred_df["Date"] == last_date]
         except Exception as e:
             return {"error": f"Error processing prediction dates: {str(e)}"}
 
-        # Aggregate recommendations from relevant portfolios
         recommendations = []
 
-        for portfolio_name in relevant_portfolios:
+        for portfolio_name in strategies:
             if portfolio_name not in latest_preds.columns:
-                # Skip if a portfolio strategy column not present
                 continue
-
             try:
                 portfolio_weights = latest_preds[latest_preds[portfolio_name] > 0][[portfolio_name]]
                 for symbol, row in portfolio_weights.iterrows():
                     weight = row[portfolio_name]
+                    portfolio_metrics = self.portfolios_df.loc[portfolio_name].to_dict() if portfolio_name in self.portfolios_df.index else {}
                     recommendations.append({
                         "symbol": symbol,
                         "portfolio_strategy": portfolio_name,
                         "weight": float(weight),
-                        "reasoning": f"Selected from {portfolio_name} portfolio matching your investment goals.",
-                        "confidence": 90  # example confidence
+                        "reasoning": f"Selected from {portfolio_name} portfolio matching your investment goal.",
+                        "confidence": 90,  # static example confidence
+                        "portfolio_metrics": portfolio_metrics
                     })
             except Exception:
-                # Continue if error occurs for this portfolio
                 continue
 
-        # Combine recommendations with same symbols by summing weights
         aggregated_recs = {}
         for rec in recommendations:
             sym = rec["symbol"]
             if sym in aggregated_recs:
                 aggregated_recs[sym]["weight"] += rec["weight"]
-                # Optional: Combine reasoning or confidence if desired
+                aggregated_recs[sym]["reasoning"] += f" Also suggested in {rec['portfolio_strategy']}."
             else:
                 aggregated_recs[sym] = rec
 
-        # Sort by descending combined weight
-        sorted_recs = sorted(aggregated_recs.values(), key=lambda x: x["weight"], reverse=True)
-
-        # Limit to top 10 recommendations
-        top_recommendations = sorted_recs[:10]
+        top_recommendations = sorted(aggregated_recs.values(), key=lambda x: x["weight"], reverse=True)[:10]
 
         return {
             "portfolio": top_recommendations,
             "summary": {
+                "investment_goal": investment_goal,
                 "risk_tolerance": risk_tolerance,
-                "investment_goals": investment_goals,
-                "selected_portfolios": list(relevant_portfolios),
+                "selected_portfolios": strategies,
                 "total_recommendations": len(top_recommendations),
             },
             "insights": [
-                "Recommendations are aggregated from portfolio strategies aligned to your goals.",
-                "Weights indicate relative significance per portfolio strategy.",
-                "Refine your preferences for more personalized results."
+                "Recommendations consider both your investment goal and risk tolerance.",
+                "Portfolio metrics are included to provide additional context per strategy.",
+                "Refine your input for more tailored results."
             ],
         }
 
 
 def get_ai_recommendations(preferences):
     """
-    Loads predictions.pkl and returns AI recommendations based on user preferences.
-    Returns fallback mock data if the file is missing.
+    Loads predictions.pkl and portfolios.pkl, returns AI recommendations based
+    on user preferences, including investment goal and optional risk tolerance.
+    Provides fallback mock data if files missing or loading fails.
     """
     model_dir = current_app.config.get("MODEL_DIR", "../MLmodel/models/")
-    model_path = os.path.join(model_dir, "predictions.pkl")
+    predictions_path = os.path.join(model_dir, "predictions.pkl")
+    portfolios_path = os.path.join(model_dir, "portfolios.pkl")
 
-    if not os.path.exists(model_path):
-        # Fallback: mock data for demo/testing
+    if not os.path.exists(predictions_path) or not os.path.exists(portfolios_path):
         return {
             "portfolio": [
                 {
@@ -120,7 +126,7 @@ def get_ai_recommendations(preferences):
                     "reasoning": "Strong growth in IT sector.",
                     "sector": "Information Technology",
                     "expectedReturn": 15.2,
-                    "riskScore": 6
+                    "riskScore": 6,
                 },
                 {
                     "symbol": "RELIANCE",
@@ -130,21 +136,52 @@ def get_ai_recommendations(preferences):
                     "reasoning": "Diversified business, market leader.",
                     "sector": "Oil & Gas",
                     "expectedReturn": 12.5,
-                    "riskScore": 5
-                }
+                    "riskScore": 5,
+                },
             ],
             "summary": {
                 "totalExpectedReturn": 13.8,
                 "portfolioRiskScore": 5.5,
                 "diversificationScore": 8.0,
-                "alignmentScore": 95
+                "alignmentScore": 95,
             },
             "insights": [
                 "Consider increasing exposure to renewable energy stocks.",
-                "Mid-cap IT stocks show strong potential for the next quarter."
-            ]
+                "Mid-cap IT stocks show strong potential for the next quarter.",
+            ],
         }
 
-    predictions_df = joblib.load(model_path)
-    recommender = PredictionModelWrapper(predictions_df)
-    return recommender.predict(preferences)
+    try:
+        predictions_df = joblib.load(predictions_path)
+        portfolios_df = joblib.load(portfolios_path)
+    except Exception as e:
+        return {"error": f"Unable to load prediction files: {str(e)}"}
+
+    recommender = PredictionModelWrapper(predictions_df, portfolios_df)
+
+    investment_goal = preferences.get("investment_goal") or ""
+    risk_tolerance = preferences.get("risk_tolerance")  # Optional
+
+    return recommender.predict(investment_goal, risk_tolerance)
+
+
+@app.route("/ai/recommend-nse", methods=["POST"])
+def ai_recommend_nse():
+    """
+    Endpoint to receive user preferences (investment_goal, risk_tolerance),
+    run AI recommendations, and return JSON response.
+    """
+    preferences = request.get_json()
+    if not preferences:
+        return jsonify({"error": "Missing JSON payload"}), 400
+
+    # Validate investment_goal exists in preferences
+    if "investment_goal" not in preferences:
+        return jsonify({"error": "Missing required field: investment_goal"}), 400
+
+    recommendations = get_ai_recommendations(preferences)
+    return jsonify(recommendations)
+
+
+if __name__ == "__main__":
+    app.run(debug=True)

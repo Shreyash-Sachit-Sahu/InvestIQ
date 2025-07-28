@@ -5,11 +5,15 @@ import { motion } from "framer-motion"
 import AIAdvisorForm from "@/components/AIAdvisorForm"
 import AIRecommendations from "@/components/AIRecommendations"
 import { Brain, Sparkles } from "lucide-react"
+interface Preferences{
+  investment_goal: string
+  risk_tolerance: string
+}
 
 export default function AIAdvisor() {
   const [recommendations, setRecommendations] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [userPreferences, setUserPreferences] = useState(null)
+  const [userPreferences, setUserPreferences] = useState <Preferences|null>(null)
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
   const [authError, setAuthError] = useState("")
 
@@ -30,7 +34,7 @@ export default function AIAdvisor() {
       }, 2000)
     }
   }, [])
-  const handleGetRecommendations = async (preferences: any) => {
+  const handleGetRecommendations = async (preferences: Preferences) => {
   setIsLoading(true)
   setUserPreferences(preferences)
 
