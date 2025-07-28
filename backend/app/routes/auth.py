@@ -61,9 +61,6 @@ def refresh():
 
 @auth_bp.route('/logout', methods=['POST'])
 def logout():
-    # If using flask-login
-    logout_user()
-    
     # Or if using session directly; clear session data
     session.clear()
 
