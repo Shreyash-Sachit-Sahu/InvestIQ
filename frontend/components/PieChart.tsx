@@ -16,7 +16,6 @@ export default function PieChart({ data }: PieChartProps) {
         <div className="text-center">
           <p>No allocation data available</p>
           <p className="text-sm mt-1">NSE portfolio allocation will appear here</p>
-          {/* TODO: Connect to Flask backend for NSE allocation data */}
         </div>
       </div>
     )

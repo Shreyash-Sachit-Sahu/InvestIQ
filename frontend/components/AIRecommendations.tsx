@@ -8,7 +8,7 @@ import PieChart from "./PieChart"
 interface Stock {
   symbol: string
   name: string
-  allocation: number
+  weight: number
   confidence: number
   reasoning: string
   sector: string
@@ -46,12 +46,6 @@ export default function AIRecommendations({ recommendations, isLoading, userPref
         </motion.div>
         <h3 className="text-lg font-semibold mb-2">AI is analyzing your preferences...</h3>
         <p className="text-gray-600 text-sm">Processing NSE market data and optimizing your portfolio</p>
-        <div className="mt-4 space-y-2">
-          <div className="text-xs text-gray-500">✓ Analyzing risk tolerance</div>
-          <div className="text-xs text-gray-500">✓ Evaluating NSE market conditions</div>
-          <div className="text-xs text-gray-500">✓ Optimizing asset allocation</div>
-          <div className="text-xs text-gray-500">⏳ Generating recommendations...</div>
-        </div>
       </div>
     )
   }
@@ -62,22 +56,21 @@ export default function AIRecommendations({ recommendations, isLoading, userPref
         <Brain className="w-16 h-16 mx-auto mb-4 text-gray-300" />
         <p className="text-lg mb-2">Ready to analyze your preferences</p>
         <p className="text-sm">Fill out the form to get personalized AI recommendations</p>
-        {userPreferences &&
-          !isLoading && ( // Only show this if preferences were submitted and not loading
-            <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-              <p className="text-sm text-yellow-800">
-                AI analysis complete, but no recommendations received. Please check your backend connection.
-              </p>
-            </div>
-          )}
+        {userPreferences && !isLoading && (
+          <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+            <p className="text-sm text-yellow-800">
+              AI analysis complete, but no recommendations received. Please check your backend connection.
+            </p>
+          </div>
+        )}
       </div>
     )
   }
 
-  const pieChartData = recommendations.portfolio.map((stock) => ({
+  const pieChartData = recommendations.portfolio.map((stock, index) => ({
     label: stock.symbol,
-    value: stock.allocation,
-    color: `hsl(${(recommendations.portfolio.indexOf(stock) * 137.5) % 360}, 70%, 60%)`,
+    value: stock.weight,
+    color: `hsl(${(index * 137.5) % 360}, 70%, 60%)`,
   }))
 
   const handleAcceptRecommendations = () => {
@@ -91,12 +84,7 @@ export default function AIRecommendations({ recommendations, isLoading, userPref
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6 }}
-      className="space-y-6"
-    >
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="space-y-6">
       {/* AI Summary */}
       <div className="bg-gradient-to-br from-green-50 to-blue-50 p-4 rounded-lg border border-green-200">
         <div className="flex items-center mb-3">
@@ -147,7 +135,7 @@ export default function AIRecommendations({ recommendations, isLoading, userPref
                   <p className="text-xs text-gray-600">{stock.name}</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-bold text-blue-600">{stock.allocation}%</div>
+                  <div className="text-lg font-bold text-blue-600">{stock.weight}%</div>
                   <div className="flex items-center text-xs">
                     <div className="w-2 h-2 bg-green-500 rounded-full mr-1"></div>
                     {stock.confidence}% confidence
@@ -186,7 +174,6 @@ export default function AIRecommendations({ recommendations, isLoading, userPref
         <Button text="Accept AI Recommendations" onClick={handleAcceptRecommendations} className="w-full btn-primary" />
         <Button text="Modify Recommendations" onClick={handleModifyRecommendations} className="w-full btn-secondary" />
         <p className="text-xs text-gray-500 text-center">
-          {/* TODO: Connect to portfolio management system */}
           Accepting will add these NSE stocks to your portfolio for tracking and management
         </p>
       </div>

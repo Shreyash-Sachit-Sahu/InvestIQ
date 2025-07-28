@@ -1,12 +1,11 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import React, { useState } from "react"
 import Button from "./Button"
 import { DollarSign, Calendar, Target, TrendingUp } from "lucide-react"
 
 interface AIAdvisorFormProps {
-  onSubmit: (preferences: any) => void
+  onSubmit: (preferences: { investment_goal: string; risk_tolerance: string }) => void
   isLoading: boolean
 }
 
@@ -25,9 +24,35 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
     rebalanceFrequency: "quarterly",
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSubmit(preferences)
+  // Map internal primaryGoal key to backend expected investment_goal string
+  const mapPrimaryGoal = (goal: string): string => {
+    switch (goal) {
+      case "growth":
+        return "capital growth"
+      case "income":
+        return "regular income"
+      case "balanced":
+        return "balanced growth and income"
+      case "preservation":
+        return "capital preservation"
+      case "retirement":
+        return "retirement planning"
+      case "tax-saving":
+        return "elss"
+      default:
+        return "capital growth"
+    }
+  }
+
+  // Flexible handleSubmit: optional event param to support both form submit and button click
+  const handleSubmit = (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) e.preventDefault()
+    const payload = {
+      investment_goal: mapPrimaryGoal(preferences.primaryGoal),
+      risk_tolerance: preferences.riskTolerance,
+      // Add any other backend-expected fields here if needed
+    }
+    onSubmit(payload)
   }
 
   const handleSectorChange = (sector: string) => {
@@ -37,7 +62,6 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
     }))
   }
 
-  // NSE/Indian market sectors
   const availableSectors = [
     "Banking",
     "Information Technology",
@@ -55,7 +79,7 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Investment Amount in INR */}
+      {/* Investment Amount */}
       <div>
         <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
           <DollarSign className="w-4 h-4 mr-1" />
@@ -101,26 +125,7 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
         </div>
       </div>
 
-      {/* Investment Horizon */}
-      <div>
-        <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-          <Calendar className="w-4 h-4 mr-1" />
-          Investment Timeline
-        </label>
-        <select
-          value={preferences.investmentHorizon}
-          onChange={(e) => setPreferences((prev) => ({ ...prev, investmentHorizon: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="1-2">1-2 years</option>
-          <option value="3-5">3-5 years</option>
-          <option value="5-10">5-10 years</option>
-          <option value="10-20">10-20 years</option>
-          <option value="20+">20+ years</option>
-        </select>
-      </div>
-
-      {/* Primary Goal */}
+      {/* Primary Investment Goal */}
       <div>
         <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
           <Target className="w-4 h-4 mr-1" />
@@ -130,6 +135,7 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
           value={preferences.primaryGoal}
           onChange={(e) => setPreferences((prev) => ({ ...prev, primaryGoal: e.target.value }))}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
         >
           <option value="growth">Capital Growth</option>
           <option value="income">Regular Income/Dividends</option>
@@ -159,86 +165,16 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
         </select>
       </div>
 
-      {/* Annual Income */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Annual Income (INR)</label>
-        <select
-          value={preferences.currentIncome}
-          onChange={(e) => setPreferences((prev) => ({ ...prev, currentIncome: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">Select income range</option>
-          <option value="300000-500000">₹3,00,000 - ₹5,00,000</option>
-          <option value="500000-1000000">₹5,00,000 - ₹10,00,000</option>
-          <option value="1000000-1500000">₹10,00,000 - ₹15,00,000</option>
-          <option value="1500000-2500000">₹15,00,000 - ₹25,00,000</option>
-          <option value="2500000+">₹25,00,000+</option>
-        </select>
-      </div>
-
-      {/* Investment Experience */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Investment Experience</label>
-        <select
-          value={preferences.investmentExperience}
-          onChange={(e) => setPreferences((prev) => ({ ...prev, investmentExperience: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="beginner">Beginner (0-2 years)</option>
-          <option value="intermediate">Intermediate (2-5 years)</option>
-          <option value="advanced">Advanced (5+ years)</option>
-          <option value="expert">Expert (10+ years)</option>
-        </select>
-      </div>
-
-      {/* NSE Sector Preferences */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Preferred NSE Sectors (Optional)</label>
-        <div className="grid grid-cols-2 gap-2">
-          {availableSectors.map((sector) => (
-            <button
-              key={sector}
-              type="button"
-              onClick={() => handleSectorChange(sector)}
-              className={`p-2 rounded-lg border text-xs font-medium transition-colors ${
-                preferences.sectors.includes(sector)
-                  ? "bg-blue-100 text-blue-700 border-blue-300"
-                  : "bg-white text-gray-600 border-gray-300 hover:bg-gray-50"
-              }`}
-            >
-              {sector}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ESG Preference */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          ESG (Environmental, Social, Governance) Preference
-        </label>
-        <select
-          value={preferences.esgPreference}
-          onChange={(e) => setPreferences((prev) => ({ ...prev, esgPreference: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="neutral">No preference</option>
-          <option value="prefer">Prefer ESG-focused companies</option>
-          <option value="require">Only ESG-compliant companies</option>
-          <option value="avoid">Focus on returns over ESG</option>
-        </select>
-      </div>
-
+      {/* Submit Button */}
       <Button
         text={isLoading ? "AI is analyzing NSE data..." : "Get AI Recommendations"}
-        onClick={() => {}}
         className="w-full btn-primary py-4 text-lg"
         disabled={isLoading || !preferences.investmentAmount || !preferences.age}
+        onClick={() => handleSubmit()}
       />
 
       <p className="text-xs text-gray-500 text-center">
-        {/* TODO: This will call your Flask backend AI endpoint: /api/ai/recommend-nse */}
-        Our AI will analyze your preferences and NSE market data to create a personalized Indian stock portfolio
+        Our AI will analyze your preferences and NSE market data to create a personalized Indian stock portfolio.
       </p>
     </form>
   )

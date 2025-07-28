@@ -4,8 +4,8 @@ import os
 
 app = Flask(__name__)
 
-# Configure your model directory here or via Flask config
-app.config['MODEL_DIR'] = "../MLmodel/outputs/"  # Adjust path as needed
+# Configure your model directory here
+app.config['MODEL_DIR'] = "../MLmodel/outputs/"  # Adjust to your path
 
 
 class PredictionModelWrapper:
@@ -72,7 +72,7 @@ class PredictionModelWrapper:
                         "portfolio_strategy": portfolio_name,
                         "weight": float(weight),
                         "reasoning": f"Selected from {portfolio_name} portfolio matching your investment goal.",
-                        "confidence": 90,  # static example confidence
+                        "confidence": 90,
                         "portfolio_metrics": portfolio_metrics
                     })
             except Exception:
@@ -106,11 +106,6 @@ class PredictionModelWrapper:
 
 
 def get_ai_recommendations(preferences):
-    """
-    Loads predictions.pkl and portfolios.pkl, returns AI recommendations based
-    on user preferences, including investment goal and optional risk tolerance.
-    Provides fallback mock data if files missing or loading fails.
-    """
     model_dir = current_app.config.get("MODEL_DIR", "../MLmodel/models/")
     predictions_path = os.path.join(model_dir, "predictions.pkl")
     portfolios_path = os.path.join(model_dir, "portfolios.pkl")
@@ -121,7 +116,7 @@ def get_ai_recommendations(preferences):
                 {
                     "symbol": "TCS",
                     "name": "Tata Consultancy Services",
-                    "allocation": 25,
+                    "weight": 25,
                     "confidence": 90,
                     "reasoning": "Strong growth in IT sector.",
                     "sector": "Information Technology",
@@ -131,7 +126,7 @@ def get_ai_recommendations(preferences):
                 {
                     "symbol": "RELIANCE",
                     "name": "Reliance Industries",
-                    "allocation": 20,
+                    "weight": 20,
                     "confidence": 85,
                     "reasoning": "Diversified business, market leader.",
                     "sector": "Oil & Gas",
@@ -167,19 +162,17 @@ def get_ai_recommendations(preferences):
 
 @app.route("/ai/recommend-nse", methods=["POST"])
 def ai_recommend_nse():
-    """
-    Endpoint to receive user preferences (investment_goal, risk_tolerance),
-    run AI recommendations, and return JSON response.
-    """
     preferences = request.get_json()
     if not preferences:
         return jsonify({"error": "Missing JSON payload"}), 400
 
-    # Validate investment_goal exists in preferences
     if "investment_goal" not in preferences:
         return jsonify({"error": "Missing required field: investment_goal"}), 400
 
     recommendations = get_ai_recommendations(preferences)
+    if isinstance(recommendations, dict) and "error" in recommendations:
+        return jsonify(recommendations), 500
+
     return jsonify(recommendations)
 
 

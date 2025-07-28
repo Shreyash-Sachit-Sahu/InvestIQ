@@ -1,20 +1,21 @@
 "use client"
 
-import { useState,useEffect } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import AIAdvisorForm from "@/components/AIAdvisorForm"
 import AIRecommendations from "@/components/AIRecommendations"
 import { Brain, Sparkles } from "lucide-react"
-interface Preferences{
+
+interface Preferences {
   investment_goal: string
   risk_tolerance: string
 }
 
 export default function AIAdvisor() {
-  const [recommendations, setRecommendations] = useState(null)
+  const [recommendations, setRecommendations] = useState<any | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [userPreferences, setUserPreferences] = useState <Preferences|null>(null)
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  const [userPreferences, setUserPreferences] = useState<Preferences | null>(null)
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || ""
   const [authError, setAuthError] = useState("")
 
   useEffect(() => {
@@ -28,54 +29,57 @@ export default function AIAdvisor() {
     } catch (error) {
       console.error("Authentication error:", error)
       setAuthError("Not authenticated. Please log in.")
-      // Redirect to login after a short delay
       setTimeout(() => {
         window.location.href = "/login"
       }, 2000)
     }
   }, [])
+
   const handleGetRecommendations = async (preferences: Preferences) => {
-  setIsLoading(true)
-  setUserPreferences(preferences)
+    setIsLoading(true)
+    setUserPreferences(preferences)
 
-  try {
-    // Get the JWT access token (assuming it's stored in localStorage)
-    const token = localStorage.getItem('access_token')
-    if (!token) {
-      throw new Error("Not authenticated. Please log in.")
+    try {
+      const token = localStorage.getItem("access_token")
+      if (!token) {
+        throw new Error("Not authenticated. Please log in.")
+      }
+
+      const response = await fetch(`${API_BASE_URL}/ai/recommend-nse`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(preferences),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        const message = errorData?.error || `Request failed with status ${response.status}`
+        throw new Error(message)
+      }
+
+      const aiRecommendations = await response.json()
+      setRecommendations(aiRecommendations)
+    } catch (err: any) {
+      console.error("AI Recommendation error:", err)
+      setRecommendations(null)
+    } finally {
+      setIsLoading(false)
     }
-
-    const response = await fetch(`${API_BASE_URL}/ai/recommend-nse`,{
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(preferences)
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      const message = errorData?.error || `Request failed with status ${response.status}`
-      throw new Error(message)
-    }
-
-    const aiRecommendations = await response.json()
-    setRecommendations(aiRecommendations)
-  } catch (err: any) {
-    console.error("AI Recommendation error:", err)
-    setRecommendations(null)
-    // Optionally: setError(err.message)
-  } finally {
-    setIsLoading(false)
   }
-  
-  }
-  
 
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+        {/* Auth error display */}
+        {authError && (
+          <div className="text-red-600 mb-4 text-center font-semibold">
+            {authError}
+          </div>
+        )}
+
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
