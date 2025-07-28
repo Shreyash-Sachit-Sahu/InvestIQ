@@ -106,7 +106,7 @@ class PredictionModelWrapper:
 
 
 def get_ai_recommendations(preferences):
-    model_dir = current_app.config.get("MODEL_DIR", "../MLmodel/models/")
+    model_dir = current_app.config.get("MODEL_DIR", "../MLmodel/outputs/")
     predictions_path = os.path.join(model_dir, "predictions.pkl")
     portfolios_path = os.path.join(model_dir, "portfolios.pkl")
 
