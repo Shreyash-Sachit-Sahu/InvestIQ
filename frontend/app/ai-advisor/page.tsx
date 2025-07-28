@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState,useEffect } from "react"
 import { motion } from "framer-motion"
 import AIAdvisorForm from "@/components/AIAdvisorForm"
 import AIRecommendations from "@/components/AIRecommendations"
@@ -11,7 +11,25 @@ export default function AIAdvisor() {
   const [isLoading, setIsLoading] = useState(false)
   const [userPreferences, setUserPreferences] = useState(null)
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+  const [authError, setAuthError] = useState("")
 
+  useEffect(() => {
+    // Check authentication on page load
+    try {
+      const token = localStorage.getItem("access_token")
+      if (!token) {
+        throw new Error("Not authenticated. Please log in.")
+      }
+      setAuthError("")
+    } catch (error) {
+      console.error("Authentication error:", error)
+      setAuthError("Not authenticated. Please log in.")
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        window.location.href = "/login"
+      }, 2000)
+    }
+  }, [])
   const handleGetRecommendations = async (preferences: any) => {
   setIsLoading(true)
   setUserPreferences(preferences)
@@ -47,8 +65,9 @@ export default function AIAdvisor() {
   } finally {
     setIsLoading(false)
   }
-}
-
+  
+  }
+  
 
   return (
     <div className="container mx-auto px-4 py-8">

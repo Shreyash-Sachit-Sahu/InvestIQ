@@ -2,6 +2,7 @@ import os
 import joblib
 from flask import current_app
 from datetime import datetime
+import pickle
 
 class PredictionModelWrapper:
     """

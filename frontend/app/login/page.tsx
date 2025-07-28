@@ -12,6 +12,7 @@ export default function Login() {
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+  const [success, setSuccess] = useState("")
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {

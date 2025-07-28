@@ -4,7 +4,7 @@ import { motion } from "framer-motion"
 import SummaryCard from "@/components/SummaryCard"
 import PortfolioTable from "@/components/PortfolioTable"
 import Chart from "@/components/Chart"
-import { useState } from "react"
+import { useState,useEffect } from "react"
 import PortfolioImportDialog from "@/components/PortfolioImportDialog"
 import { Button } from "@/components/ui/button"
 
@@ -16,7 +16,25 @@ export default function Dashboard() {
     datasets: [],
   })
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
-  
+  const [authError, setAuthError] = useState("")
+
+  useEffect(() => {
+    // Check authentication on page load
+    try {
+      const token = localStorage.getItem("access_token")
+      if (!token) {
+        throw new Error("Not authenticated. Please log in.")
+      }
+      setAuthError("")
+    } catch (error) {
+      console.error("Authentication error:", error)
+      setAuthError("Not authenticated. Please log in.")
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        window.location.href = "/login"
+      }, 2000)
+    }
+  }, [])
 
   const handleImportPortfolio = async (method: string, data?: File) => {
   if (method !== 'csv' || !data) {
