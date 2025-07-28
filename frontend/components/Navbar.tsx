@@ -19,7 +19,8 @@ export default function Navbar() {
 
   const handleSignOut = async () => {
   try {
-    const response = await fetch('/api/auth/logout', {
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+    const response = await fetch(`${API_BASE_URL}/auth/logout`, {
       method: 'POST',
       credentials: 'include', // important if you use cookies
       headers: { 'Content-Type': 'application/json' },
