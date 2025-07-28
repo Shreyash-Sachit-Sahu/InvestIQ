@@ -3,17 +3,9 @@ import joblib
 import os
 
 app = Flask(__name__)
-
-# Configure your model directory here
-app.config['MODEL_DIR'] = "../MLmodel/outputs/"  # Adjust to your path
-
+app.config['MODEL_DIR'] = "../MLmodel/outputs/"
 
 class PredictionModelWrapper:
-    """
-    Wraps the predictions DataFrame and portfolios metadata,
-    and produces recommendations based on user investment goal and risk tolerance.
-    """
-
     def __init__(self, predictions_df, portfolios_df):
         self.pred_df = predictions_df
         self.portfolios_df = portfolios_df
@@ -104,13 +96,13 @@ class PredictionModelWrapper:
             ],
         }
 
-
 def get_ai_recommendations(preferences):
     model_dir = current_app.config.get("MODEL_DIR", "../MLmodel/models/")
     predictions_path = os.path.join(model_dir, "predictions.pkl")
     portfolios_path = os.path.join(model_dir, "portfolios.pkl")
 
     if not os.path.exists(predictions_path) or not os.path.exists(portfolios_path):
+        # Fallback mock data
         return {
             "portfolio": [
                 {
@@ -159,22 +151,29 @@ def get_ai_recommendations(preferences):
 
     return recommender.predict(investment_goal, risk_tolerance)
 
-
 @app.route("/ai/recommend-nse", methods=["POST"])
 def ai_recommend_nse():
-    preferences = request.get_json()
+    preferences = request.get_json(force=True, silent=True)
     if not preferences:
-        return jsonify({"error": "Missing JSON payload"}), 400
+        return jsonify({"error": "Missing or invalid JSON payload"}), 400
 
-    if "investment_goal" not in preferences:
-        return jsonify({"error": "Missing required field: investment_goal"}), 400
+    if not isinstance(preferences, dict):
+        return jsonify({"error": "Payload must be a JSON object"}), 400
 
-    recommendations = get_ai_recommendations(preferences)
+    investment_goal = preferences.get("investment_goal")
+    if not investment_goal or not isinstance(investment_goal, str) or investment_goal.strip() == "":
+        return jsonify({"error": "Missing or invalid 'investment_goal'"}), 400
+
+    try:
+        recommendations = get_ai_recommendations(preferences)
+    except Exception as e:
+        app.logger.error(f"Error during recommendation processing: {e}")
+        return jsonify({"error": "Internal server error"}), 500
+
     if isinstance(recommendations, dict) and "error" in recommendations:
         return jsonify(recommendations), 500
 
     return jsonify(recommendations)
-
 
 if __name__ == "__main__":
     app.run(debug=True)

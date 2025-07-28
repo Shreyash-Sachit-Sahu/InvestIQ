@@ -46,6 +46,12 @@ export default function AIRecommendations({ recommendations, isLoading, userPref
         </motion.div>
         <h3 className="text-lg font-semibold mb-2">AI is analyzing your preferences...</h3>
         <p className="text-gray-600 text-sm">Processing NSE market data and optimizing your portfolio</p>
+        <div className="mt-4 space-y-2">
+          <div className="text-xs text-gray-500">✓ Analyzing risk tolerance</div>
+          <div className="text-xs text-gray-500">✓ Evaluating NSE market conditions</div>
+          <div className="text-xs text-gray-500">✓ Optimizing asset allocation</div>
+          <div className="text-xs text-gray-500">⏳ Generating recommendations...</div>
+        </div>
       </div>
     )
   }
@@ -67,6 +73,7 @@ export default function AIRecommendations({ recommendations, isLoading, userPref
     )
   }
 
+  // Prepare data for pie chart with HSL colors uniquely assigned
   const pieChartData = recommendations.portfolio.map((stock, index) => ({
     label: stock.symbol,
     value: stock.weight,
@@ -74,18 +81,23 @@ export default function AIRecommendations({ recommendations, isLoading, userPref
   }))
 
   const handleAcceptRecommendations = () => {
-    // TODO: Implement accepting recommendations and moving to portfolio
+    // TODO: Implement saving/accept flow
     console.log("Accepting AI recommendations:", recommendations)
   }
 
   const handleModifyRecommendations = () => {
-    // TODO: Implement modification flow
+    // TODO: Implement modify recommendations flow
     console.log("Modifying recommendations")
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="space-y-6">
-      {/* AI Summary */}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6 }}
+      className="space-y-6"
+    >
+      {/* Summary Section */}
       <div className="bg-gradient-to-br from-green-50 to-blue-50 p-4 rounded-lg border border-green-200">
         <div className="flex items-center mb-3">
           <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
@@ -111,13 +123,13 @@ export default function AIRecommendations({ recommendations, isLoading, userPref
         </div>
       </div>
 
-      {/* Portfolio Allocation Chart */}
+      {/* Allocation Pie Chart */}
       <div>
         <h4 className="font-semibold mb-3">Recommended Allocation</h4>
         <PieChart data={pieChartData} />
       </div>
 
-      {/* Stock Recommendations */}
+      {/* Stock List */}
       <div>
         <h4 className="font-semibold mb-3">AI-Selected NSE Stocks</h4>
         <div className="space-y-3 max-h-64 overflow-y-auto">
@@ -169,7 +181,7 @@ export default function AIRecommendations({ recommendations, isLoading, userPref
         </div>
       </div>
 
-      {/* Action Buttons */}
+      {/* Actions */}
       <div className="space-y-3 pt-4 border-t border-gray-200">
         <Button text="Accept AI Recommendations" onClick={handleAcceptRecommendations} className="w-full btn-primary" />
         <Button text="Modify Recommendations" onClick={handleModifyRecommendations} className="w-full btn-secondary" />

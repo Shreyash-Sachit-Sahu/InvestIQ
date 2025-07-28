@@ -2,7 +2,7 @@
 
 import React, { useState } from "react"
 import Button from "./Button"
-import { DollarSign, Calendar, Target, TrendingUp } from "lucide-react"
+import { DollarSign, Target, TrendingUp } from "lucide-react"
 
 interface AIAdvisorFormProps {
   onSubmit: (preferences: { investment_goal: string; risk_tolerance: string }) => void
@@ -13,18 +13,10 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
   const [preferences, setPreferences] = useState({
     investmentAmount: "",
     riskTolerance: "moderate",
-    investmentHorizon: "5-10",
     primaryGoal: "growth",
     age: "",
-    currentIncome: "",
-    hasEmergencyFund: "yes",
-    investmentExperience: "intermediate",
-    sectors: [] as string[],
-    esgPreference: "neutral",
-    rebalanceFrequency: "quarterly",
   })
 
-  // Map internal primaryGoal key to backend expected investment_goal string
   const mapPrimaryGoal = (goal: string): string => {
     switch (goal) {
       case "growth":
@@ -44,38 +36,13 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
     }
   }
 
-  // Flexible handleSubmit: optional event param to support both form submit and button click
   const handleSubmit = (e?: React.FormEvent | React.MouseEvent) => {
     if (e) e.preventDefault()
-    const payload = {
+    onSubmit({
       investment_goal: mapPrimaryGoal(preferences.primaryGoal),
       risk_tolerance: preferences.riskTolerance,
-      // Add any other backend-expected fields here if needed
-    }
-    onSubmit(payload)
+    })
   }
-
-  const handleSectorChange = (sector: string) => {
-    setPreferences((prev) => ({
-      ...prev,
-      sectors: prev.sectors.includes(sector) ? prev.sectors.filter((s) => s !== sector) : [...prev.sectors, sector],
-    }))
-  }
-
-  const availableSectors = [
-    "Banking",
-    "Information Technology",
-    "Oil & Gas",
-    "FMCG",
-    "Pharmaceuticals",
-    "Automobiles",
-    "Metals & Mining",
-    "Telecommunications",
-    "Power",
-    "Real Estate",
-    "Textiles",
-    "Chemicals",
-  ]
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -88,7 +55,7 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
         <select
           value={preferences.investmentAmount}
           onChange={(e) => setPreferences((prev) => ({ ...prev, investmentAmount: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
           required
         >
           <option value="">Select amount range</option>
@@ -113,10 +80,8 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
               key={risk}
               type="button"
               onClick={() => setPreferences((prev) => ({ ...prev, riskTolerance: risk }))}
-              className={`p-3 rounded-lg border text-sm font-medium transition-colors ${
-                preferences.riskTolerance === risk
-                  ? "bg-blue-500 text-white border-blue-500"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+              className={`p-3 rounded-lg border text-sm text-center font-medium ${
+                preferences.riskTolerance === risk ? "bg-blue-500 text-white" : "bg-white text-gray-700"
               }`}
             >
               {risk.charAt(0).toUpperCase() + risk.slice(1)}
@@ -125,7 +90,7 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
         </div>
       </div>
 
-      {/* Primary Investment Goal */}
+      {/* Primary Goal */}
       <div>
         <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
           <Target className="w-4 h-4 mr-1" />
@@ -134,7 +99,7 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
         <select
           value={preferences.primaryGoal}
           onChange={(e) => setPreferences((prev) => ({ ...prev, primaryGoal: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
           required
         >
           <option value="growth">Capital Growth</option>
@@ -152,7 +117,7 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
         <select
           value={preferences.age}
           onChange={(e) => setPreferences((prev) => ({ ...prev, age: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg"
           required
         >
           <option value="">Select age range</option>
@@ -165,7 +130,6 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
         </select>
       </div>
 
-      {/* Submit Button */}
       <Button
         text={isLoading ? "AI is analyzing NSE data..." : "Get AI Recommendations"}
         className="w-full btn-primary py-4 text-lg"

@@ -19,19 +19,14 @@ export default function AIAdvisor() {
   const [authError, setAuthError] = useState("")
 
   useEffect(() => {
-    // Check authentication on page load
     try {
       const token = localStorage.getItem("access_token")
-      if (!token) {
-        throw new Error("Not authenticated. Please log in.")
-      }
+      if (!token) throw new Error("Not authenticated. Please log in.")
       setAuthError("")
     } catch (error) {
       console.error("Authentication error:", error)
       setAuthError("Not authenticated. Please log in.")
-      setTimeout(() => {
-        window.location.href = "/login"
-      }, 2000)
+      setTimeout(() => window.location.href = "/login", 2000)
     }
   }, [])
 
@@ -41,17 +36,17 @@ export default function AIAdvisor() {
 
     try {
       const token = localStorage.getItem("access_token")
-      if (!token) {
-        throw new Error("Not authenticated. Please log in.")
-      }
+      if (!token) throw new Error("Not authenticated. Please log in.")
+
+      console.log("Sending preferences to backend:", preferences) // Debug log
 
       const response = await fetch(`${API_BASE_URL}/ai/recommend-nse`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(preferences),
+        body: JSON.stringify(preferences)
       })
 
       if (!response.ok) {
@@ -73,14 +68,8 @@ export default function AIAdvisor() {
   return (
     <div className="container mx-auto px-4 py-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-        {/* Auth error display */}
-        {authError && (
-          <div className="text-red-600 mb-4 text-center font-semibold">
-            {authError}
-          </div>
-        )}
+        {authError && <div className="text-red-600 mb-4 text-center font-semibold">{authError}</div>}
 
-        {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
@@ -89,13 +78,11 @@ export default function AIAdvisor() {
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-4">AI Investment Advisor</h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Let our AI analyze your preferences and recommend the perfect NSE portfolio tailored to your goals, risk
-            tolerance, and investment timeline for the Indian stock market.
+            Let our AI analyze your preferences and recommend the perfect NSE portfolio tailored to your goals, risk tolerance, and investment timeline for the Indian stock market.
           </p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* AI Advisor Form */}
           <div className="card">
             <div className="flex items-center mb-6">
               <Sparkles className="w-6 h-6 text-blue-500 mr-2" />
@@ -104,7 +91,6 @@ export default function AIAdvisor() {
             <AIAdvisorForm onSubmit={handleGetRecommendations} isLoading={isLoading} />
           </div>
 
-          {/* AI Recommendations */}
           <div className="card">
             <h2 className="text-2xl font-semibold mb-6">AI Recommendations</h2>
             <AIRecommendations
@@ -115,7 +101,6 @@ export default function AIAdvisor() {
           </div>
         </div>
 
-        {/* How AI Works Section */}
         {!recommendations && !isLoading && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -131,27 +116,21 @@ export default function AIAdvisor() {
                     <span className="text-blue-600 font-bold">1</span>
                   </div>
                   <h4 className="font-semibold mb-2">Analyze Preferences</h4>
-                  <p className="text-sm text-gray-600">
-                    Our AI processes your risk tolerance, timeline, and financial goals for Indian markets
-                  </p>
+                  <p className="text-sm text-gray-600">Our AI processes your risk tolerance, timeline, and financial goals for Indian markets</p>
                 </div>
                 <div className="text-center">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                     <span className="text-blue-600 font-bold">2</span>
                   </div>
                   <h4 className="font-semibold mb-2">NSE Market Analysis</h4>
-                  <p className="text-sm text-gray-600">
-                    Advanced algorithms analyze NSE stocks, sectoral trends, and Indian economic indicators
-                  </p>
+                  <p className="text-sm text-gray-600">Advanced algorithms analyze NSE stocks, sectoral trends, and Indian economic indicators</p>
                 </div>
                 <div className="text-center">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                     <span className="text-blue-600 font-bold">3</span>
                   </div>
                   <h4 className="font-semibold mb-2">Indian Portfolio</h4>
-                  <p className="text-sm text-gray-600">
-                    Get a custom NSE portfolio with detailed reasoning for each Indian stock recommendation
-                  </p>
+                  <p className="text-sm text-gray-600">Get a custom NSE portfolio with detailed reasoning for each Indian stock recommendation</p>
                 </div>
               </div>
             </div>
