@@ -17,16 +17,30 @@ export default function Navbar() {
     }
   }, [])
 
-  const handleSignOut = () => {
-    // Clear authentication data
-    localStorage.removeItem("access_token")
-    localStorage.removeItem("refresh_token")
-    localStorage.removeItem("user_email")
-    setIsAuthenticated(false)
-    setIsOpen(false)
-    // Redirect to home page
-    window.location.href = "/"
+  const handleSignOut = async () => {
+  try {
+    const response = await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include', // important if you use cookies
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (response.ok) {
+      // Clear frontend auth state
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      localStorage.removeItem("user_email");
+      setIsAuthenticated(false);
+      setIsOpen(false);
+      window.location.href = "/";
+    } else {
+      // Handle error logout response
+      console.error("Logout failed");
+    }
+  } catch (error) {
+    console.error("Logout error:", error);
   }
+  };
+
 
   const navLinks = [
     { href: "/", label: "Home" },

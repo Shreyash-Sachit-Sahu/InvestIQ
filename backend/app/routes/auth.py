@@ -5,6 +5,7 @@ from app.utils import error_response
 import re
 from datetime import datetime
 from sqlalchemy.exc import IntegrityError
+from flask_login import logout_user
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 EMAIL_REGEX = r'^[\w\.-]+@[\w\.-]+\.\w+$'
@@ -57,3 +58,16 @@ def refresh():
     user_id = get_jwt_identity()
     access_token = create_access_token(identity=user_id)
     return jsonify({"access_token": access_token}), 200
+
+@auth_bp.route('/logout', methods=['POST'])
+def logout():
+    # If using flask-login
+    logout_user()
+    
+    # Or if using session directly; clear session data
+    session.clear()
+
+    # Optionally also clear tokens server-side if applicable
+
+    return jsonify({"message": "Logged out successfully"}), 200
+
