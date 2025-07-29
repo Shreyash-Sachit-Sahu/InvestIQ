@@ -9,12 +9,12 @@ class PredictionModelWrapper:
 
     def predict(self, investment_goal, risk_tolerance=None):
         goal_to_portfolios = {
-            "capital growth": ["Max Sharpe", "Risk Parity"],
-            "regular income": ["Min Variance"],
-            "balanced growth and income": ["Max Sharpe", "Min Variance"],
-            "capital preservation": ["Min Variance"],
-            "retirement planning": ["Risk Parity", "Max Sharpe"],
-            "elss": ["Max Sharpe"],
+            "Capital growth": ["Max Sharpe", "Risk Parity"],
+            "Regular Income/Dividends": ["Min Variance"],
+            "Balanced Growth & Income": ["Max Sharpe", "Min Variance"],
+            "Capital Preservation": ["Min Variance"],
+            "Retirement Planning": ["Risk Parity", "Max Sharpe"],
+            "Tax Saving(ELSS)": ["Max Sharpe"],
         }
 
         investment_goal = str(investment_goal).lower() if investment_goal else ""
