@@ -30,11 +30,11 @@ class PredictionModelWrapper:
                         or self.portfolios_df.loc[strat].get("risk_score")
                     )
                     if vol is not None:
-                        if risk_tolerance == "low" and vol <= 0.1:
+                        if risk_tolerance == "conservative" and vol <= 0.1:
                             allowed_strategies.append(strat)
-                        elif risk_tolerance == "medium" and vol <= 0.2:
+                        elif risk_tolerance == "moderate" and vol <= 0.2:
                             allowed_strategies.append(strat)
-                        elif risk_tolerance == "high":
+                        elif risk_tolerance == "aggressive":
                             allowed_strategies.append(strat)
                     else:
                         allowed_strategies.append(strat)
