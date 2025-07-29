@@ -38,7 +38,7 @@ export default function AIAdvisor() {
       const token = localStorage.getItem("access_token")
       if (!token) throw new Error("Not authenticated. Please log in.")
 
-      const response = await fetch(`${API_BASE_URL}/ai/recommend-nse`, {
+      const response = await fetch(`${API_BASE_URL}/api/ai/recommend-nse`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
