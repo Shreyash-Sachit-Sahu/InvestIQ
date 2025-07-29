@@ -9,19 +9,19 @@ class PredictionModelWrapper:
 
     def predict(self, investment_goal, risk_tolerance=None):
         goal_to_portfolios = {
-            "Capital growth": ["Max Sharpe", "Risk Parity"],
-            "Regular Income/Dividends": ["Min Variance"],
-            "Balanced Growth & Income": ["Max Sharpe", "Min Variance"],
-            "Capital Preservation": ["Min Variance"],
-            "Retirement Planning": ["Risk Parity", "Max Sharpe"],
-            "Tax Saving(ELSS)": ["Max Sharpe"],
+            "capital growth": ["Max Sharpe", "Risk Parity"],
+            "regular income": ["Min Variance"],
+            "balanced growth and income": ["Max Sharpe", "Min Variance"],
+            "capital preservation": ["Min Variance"],
+            "retirement planning": ["Risk Parity", "Max Sharpe"],
+            "elss": ["Max Sharpe"],
         }
 
-        investment_goal = str(investment_goal) if investment_goal else ""
+        investment_goal = str(investment_goal).lower() if investment_goal else ""
         strategies = goal_to_portfolios.get(investment_goal, ["Max Sharpe"])
 
         if risk_tolerance:
-            risk_tolerance = str(risk_tolerance)
+            risk_tolerance = str(risk_tolerance).lower()
             allowed_strategies = []
             for strat in strategies:
                 if strat in self.portfolios_df.index:
@@ -30,11 +30,11 @@ class PredictionModelWrapper:
                         or self.portfolios_df.loc[strat].get("risk_score")
                     )
                     if vol is not None:
-                        if risk_tolerance == "Conservative" and vol <= 0.1:
+                        if risk_tolerance == "conservative" and vol <= 0.1:
                             allowed_strategies.append(strat)
-                        elif risk_tolerance == "Moderate" and vol <= 0.2:
+                        elif risk_tolerance == "moderate" and vol <= 0.2:
                             allowed_strategies.append(strat)
-                        elif risk_tolerance == "Aggressive":
+                        elif risk_tolerance == "aggressive":
                             allowed_strategies.append(strat)
                     else:
                         allowed_strategies.append(strat)
