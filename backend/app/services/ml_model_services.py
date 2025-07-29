@@ -2,6 +2,7 @@ import joblib
 import os
 from flask import current_app
 
+
 class PredictionModelWrapper:
     def __init__(self, predictions_df, portfolios_df):
         self.pred_df = predictions_df
@@ -23,23 +24,46 @@ class PredictionModelWrapper:
         if risk_tolerance:
             risk_tolerance = str(risk_tolerance).lower()
             allowed_strategies = []
+
+            is_portfolios_dict = isinstance(self.portfolios_df, dict)
+
             for strat in strategies:
-                if strat in self.portfolios_df.index:
-                    vol = (
-                        self.portfolios_df.loc[strat].get("volatility")
-                        or self.portfolios_df.loc[strat].get("risk_score")
-                    )
-                    if vol is not None:
-                        if risk_tolerance == "conservative" and vol <= 0.1:
-                            allowed_strategies.append(strat)
-                        elif risk_tolerance == "moderate" and vol <= 0.2:
-                            allowed_strategies.append(strat)
-                        elif risk_tolerance == "aggressive":
+                if is_portfolios_dict:
+                    if strat in self.portfolios_df:
+                        vol = (
+                            self.portfolios_df[strat].get("volatility")
+                            or self.portfolios_df[strat].get("risk_score")
+                        )
+                        if vol is not None:
+                            if risk_tolerance == "conservative" and vol <= 0.1:
+                                allowed_strategies.append(strat)
+                            elif risk_tolerance == "moderate" and vol <= 0.2:
+                                allowed_strategies.append(strat)
+                            elif risk_tolerance == "aggressive":
+                                allowed_strategies.append(strat)
+                        else:
                             allowed_strategies.append(strat)
                     else:
                         allowed_strategies.append(strat)
                 else:
-                    allowed_strategies.append(strat)
+                    # assume portfolios_df is a DataFrame
+                    if strat in self.portfolios_df.index:
+                        vol = (
+                            self.portfolios_df.loc[strat].get("volatility")
+                            or self.portfolios_df.loc[strat].get("risk_score")
+                        )
+                        if vol is not None:
+                            if risk_tolerance == "conservative" and vol <= 0.1:
+                                allowed_strategies.append(strat)
+                            elif risk_tolerance == "moderate" and vol <= 0.2:
+                                allowed_strategies.append(strat)
+                            elif risk_tolerance == "aggressive":
+                                allowed_strategies.append(strat)
+                        else:
+                            allowed_strategies.append(strat)
+                    else:
+                        allowed_strategies.append(strat)
+
             if allowed_strategies:
                 strategies = allowed_strategies
 
@@ -58,11 +82,13 @@ class PredictionModelWrapper:
                 portfolio_weights = latest_preds[latest_preds[portfolio_name] > 0][[portfolio_name]]
                 for symbol, row in portfolio_weights.iterrows():
                     weight = row[portfolio_name]
-                    portfolio_metrics = (
-                        self.portfolios_df.loc[portfolio_name].to_dict()
-                        if portfolio_name in self.portfolios_df.index
-                        else {}
-                    )
+                    if is_portfolios_dict:
+                        portfolio_metrics = self.portfolios_df.get(portfolio_name, {})
+                    else:
+                        portfolio_metrics = (
+                            self.portfolios_df.loc[portfolio_name].to_dict()
+                            if portfolio_name in self.portfolios_df.index else {}
+                        )
                     recommendations.append(
                         {
                             "symbol": symbol,
@@ -74,6 +100,7 @@ class PredictionModelWrapper:
                         }
                     )
             except Exception:
+                # Suppress individual portfolio errors for robustness
                 continue
 
         aggregated_recs = {}
@@ -111,7 +138,7 @@ def get_ai_recommendations(preferences):
     portfolios_path = os.path.join(model_dir, "portfolios.pkl")
 
     if not os.path.exists(predictions_path) or not os.path.exists(portfolios_path):
-        # Fallback mock data
+        # Provide fallback mock data
         return {
             "portfolio": [
                 {
