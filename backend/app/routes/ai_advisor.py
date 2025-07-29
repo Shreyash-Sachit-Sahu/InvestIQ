@@ -10,7 +10,7 @@ ai_advisor_bp = Blueprint('ai_advisor', __name__, url_prefix='/api/ai')
 @jwt_required(optional=True)  # Allow OPTIONS without JWT token
 def recommend_nse():
     # Handle OPTIONS request early, no processing needed
-    if request.method == 'OPTIONS':
+    if request.method == 'POST':
         # Flask-CORS will add the proper CORS headers
         return '', 200
 
