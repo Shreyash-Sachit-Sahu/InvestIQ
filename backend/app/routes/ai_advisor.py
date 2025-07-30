@@ -19,7 +19,7 @@ def recommend_nse():
         return '', 200
     
     start_time = time()
-    user_id = get_jwt_identity()
+    user_id = get_jwt_identity() 
 
     preferences = request.get_json()
     if not preferences or not isinstance(preferences, dict):
