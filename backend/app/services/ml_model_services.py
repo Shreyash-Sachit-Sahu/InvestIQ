@@ -19,11 +19,11 @@ class PredictionModelWrapper:
             "elss": ["Max Sharpe"],
         }
 
-        investment_goal = str(investment_goal).lower() if investment_goal else ""
+        investment_goal = str(investment_goal) if investment_goal else ""
         strategies = goal_to_portfolios.get(investment_goal, ["Max Sharpe"])
 
         if risk_tolerance:
-            risk_tolerance = str(risk_tolerance).lower()
+            risk_tolerance = str(risk_tolerance)
         else:
             risk_tolerance = None
 
