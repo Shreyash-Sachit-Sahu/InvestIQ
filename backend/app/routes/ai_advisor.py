@@ -14,11 +14,12 @@ ai_advisor_bp = Blueprint('ai_advisor', __name__, url_prefix='/api/ai')
 @ai_advisor_bp.route('/recommend-nse', methods=['POST', 'OPTIONS'])
 @jwt_required()
 def recommend_nse():
-    start_time = time()
-    user_id = get_jwt_identity()
 
     if request.method == "OPTIONS":
         return '', 200
+    
+    start_time = time()
+    user_id = get_jwt_identity()
 
     preferences = request.get_json()
     if not preferences or not isinstance(preferences, dict):
