@@ -12,7 +12,7 @@ ai_advisor_bp = Blueprint('ai_advisor', __name__, url_prefix='/api/ai')
 
 
 @ai_advisor_bp.route('/recommend-nse', methods=['POST', 'OPTIONS'])
-@jwt_required(optional=true)
+@jwt_required(optional=True)
 def recommend_nse():
 
     if request.method == "OPTIONS":
