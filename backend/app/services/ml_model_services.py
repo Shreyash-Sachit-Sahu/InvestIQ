@@ -6,12 +6,6 @@ import pandas as pd
 
 class PredictionModelWrapper:
     def __init__(self, predictions_data, portfolios_data):
-        """
-        :param predictions_data: Either a DataFrame with a 'Date' column (legacy) or
-                                 a dict mapping symbols to DataFrames with 'Date' column.
-        :param portfolios_data: Either a Pandas DataFrame indexed by portfolio strategy names or
-                                a dict mapping portfolio strategy names to metadata dicts.
-        """
         self.pred_data = predictions_data
         self.portfolios_df = portfolios_data
 
@@ -35,7 +29,6 @@ class PredictionModelWrapper:
 
         is_portfolios_dict = isinstance(self.portfolios_df, dict)
 
-        # Filter strategies by risk tolerance, when given
         if risk_tolerance:
             allowed_strategies = []
             for strat in strategies:
@@ -48,7 +41,6 @@ class PredictionModelWrapper:
                         vol = port_info.get("volatility") or port_info.get("risk_score")
                     else:
                         vol = None
-
                 if vol is not None:
                     if risk_tolerance == "conservative" and vol <= 0.1:
                         allowed_strategies.append(strat)
@@ -57,9 +49,7 @@ class PredictionModelWrapper:
                     elif risk_tolerance == "aggressive":
                         allowed_strategies.append(strat)
                 else:
-                    # Include strategy if no volatility info exists
                     allowed_strategies.append(strat)
-
             if allowed_strategies:
                 strategies = allowed_strategies
 
@@ -67,40 +57,50 @@ class PredictionModelWrapper:
         is_pred_dict = isinstance(self.pred_data, dict)
 
         if is_pred_dict:
-            # Process when predictions are dict of DataFrames keyed by symbol
-            for portfolio_name in strategies:
+            for strat in strategies:
                 for symbol, pred_df in self.pred_data.items():
-                    if portfolio_name not in pred_df.columns:
+                    if strat not in pred_df.columns:
                         continue
                     try:
                         last_date = pred_df["Date"].max()
-                        latest_preds = pred_df[pred_df["Date"] == last_date]
-                        portfolio_weights = latest_preds[latest_preds[portfolio_name] > 0][[portfolio_name]]
+                        latest_pred_df = pred_df[pred_df["Date"] == last_date]
+                        if latest_pred_df.empty:
+                            continue
+                        portfolio_weights = latest_pred_df[latest_pred_df[strat] > 0][[strat]]
                         for idx, row in portfolio_weights.iterrows():
-                            weight = row[portfolio_name]
+                            weight = row[strat]
                             if is_portfolios_dict:
-                                portfolio_metrics = self.portfolios_df.get(portfolio_name, {})
+                                portfolio_metrics = self.portfolios_df.get(strat, {})
                             else:
                                 portfolio_metrics = (
-                                    self.portfolios_df.loc[portfolio_name].to_dict()
-                                    if portfolio_name in self.portfolios_df.index else {}
+                                    self.portfolios_df.loc[strat].to_dict()
+                                    if strat in self.portfolios_df.index else {}
                                 )
                             recommendations.append({
                                 "symbol": symbol,
-                                "portfolio_strategy": portfolio_name,
+                                "portfolio_strategy": strat,
                                 "weight": float(weight),
-                                "reasoning": f"Selected from {portfolio_name} portfolio matching your investment goal.",
+                                "reasoning": f"Selected from {strat} portfolio matching your investment goal.",
                                 "confidence": 90,
                                 "portfolio_metrics": portfolio_metrics,
                             })
                     except Exception:
-                        # Suppress individual symbol errors for robustness
                         continue
         else:
-            # Legacy: predictions as single DataFrame with 'Date' column
             try:
                 last_date = self.pred_data["Date"].max()
                 latest_preds = self.pred_data[self.pred_data["Date"] == last_date]
+                if latest_preds.empty:
+                    return {
+                        "portfolio": [],
+                        "summary": {
+                            "investment_goal": investment_goal,
+                            "risk_tolerance": risk_tolerance,
+                            "selected_portfolios": strategies,
+                            "total_recommendations": 0,
+                        },
+                        "insights": ["No predictions available for the latest date."],
+                    }
             except Exception as e:
                 return {"error": f"Error processing prediction dates: {str(e)}"}
 
@@ -129,7 +129,6 @@ class PredictionModelWrapper:
                 except Exception:
                     continue
 
-        # Aggregate recommendations by symbol if suggested multiple times
         aggregated_recs = {}
         for rec in recommendations:
             sym = rec["symbol"]
@@ -177,23 +176,15 @@ def get_ai_recommendations(preferences):
             current_app.logger.info(f"Predictions columns: {predictions_data.columns.tolist()}")
         elif isinstance(predictions_data, dict):
             current_app.logger.info(f"Predictions dict keys: {list(predictions_data.keys())}")
-        else:
-            current_app.logger.info("Predictions data unknown format")
-
         current_app.logger.info(f"Loaded portfolios data type: {type(portfolios_data)}")
         if hasattr(portfolios_data, "index"):
             current_app.logger.info(f"Portfolios index: {portfolios_data.index}")
         elif isinstance(portfolios_data, dict):
             current_app.logger.info(f"Portfolios keys: {list(portfolios_data.keys())}")
-        else:
-            current_app.logger.info("Portfolios data unknown format")
-
     except Exception as e:
         return {"error": f"Unable to load prediction files: {str(e)}"}
 
     recommender = PredictionModelWrapper(predictions_data, portfolios_data)
-
     investment_goal = preferences.get("investment_goal") or ""
     risk_tolerance = preferences.get("risk_tolerance")  # Optional
-
     return recommender.predict(investment_goal, risk_tolerance)
