@@ -7,7 +7,6 @@ from app.helper.contract_mapping import (
     make_error_response,
     yfinance_enrich,
 )
-from datetime import datetime
 
 ai_advisor_bp = Blueprint('ai_advisor', __name__, url_prefix='/api/ai')
 
@@ -23,38 +22,55 @@ def recommend_nse():
 
     preferences = request.get_json()
     if not preferences or not isinstance(preferences, dict):
-        return jsonify(make_error_response(
-            "Missing JSON payload.", user_id, int((time() - start_time) * 1000)
-        )), 400
+        return (
+            jsonify(make_error_response(
+                "Missing JSON payload.", user_id, int((time() - start_time) * 1000)
+            )),
+            400,
+        )
 
     investment_goal = preferences.get("investment_goal")
     if not investment_goal or not isinstance(investment_goal, str) or not investment_goal.strip():
-        return jsonify(make_error_response(
-            "Missing or invalid 'investment_goal'.", user_id, int((time() - start_time) * 1000)
-        )), 422
+        return (
+            jsonify(make_error_response(
+                "Missing or invalid 'investment_goal'.", user_id, int((time() - start_time) * 1000)
+            )),
+            422,
+        )
 
     risk_tolerance = preferences.get("risk_tolerance")
     if risk_tolerance is not None and not isinstance(risk_tolerance, str):
-        return jsonify(make_error_response(
-            "'risk_tolerance' must be a string if provided.", user_id, int((time() - start_time) * 1000)
-        )), 422
+        return (
+            jsonify(make_error_response(
+                "'risk_tolerance' must be a string if provided.",
+                user_id,
+                int((time() - start_time) * 1000),
+            )),
+            422,
+        )
 
     try:
         engine_result = get_ai_recommendations(preferences)
     except Exception:
         current_app.logger.exception("AI recommendation error")
-        return jsonify(make_error_response(
-            "Internal error in AI recommendation service.", user_id, int((time() - start_time) * 1000)
-        )), 500
+        return (
+            jsonify(make_error_response(
+                "Internal error in AI recommendation service.", user_id, int((time() - start_time) * 1000)
+            )),
+            500,
+        )
 
     if isinstance(engine_result, dict) and engine_result.get("error"):
-        return jsonify(make_error_response(
-            engine_result.get("error"),
-            user_id=user_id,
-            processing_time=int((time() - start_time) * 1000)
-        )), 200
+        return (
+            jsonify(make_error_response(
+                engine_result.get("error"),
+                user_id=user_id,
+                processing_time=int((time() - start_time) * 1000),
+            )),
+            200,
+        )
 
-    # Contract mapping & dynamic enrichment
+    # Build portfolio with dynamic NSE enrichment
     portfolio = []
     for rec in engine_result.get("portfolio", []):
         enrich = yfinance_enrich(rec["symbol"])
