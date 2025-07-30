@@ -40,6 +40,7 @@ export default function AIAdvisor() {
 
       const response = await fetch(`${API_BASE_URL}/ai/recommend-nse`, {
         method: "POST",
+        credentials:'include',
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
