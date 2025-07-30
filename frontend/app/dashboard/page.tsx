@@ -56,6 +56,7 @@ export default function Dashboard() {
 
     const response = await fetch(`${API_BASE_URL}/portfolio/upload-csv`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         Authorization: `Bearer ${token}`
       },
