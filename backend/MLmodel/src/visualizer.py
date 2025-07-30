@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 
+
 class Visualizer:
     def __init__(self, config):
         self.config = config
@@ -13,7 +14,7 @@ class Visualizer:
             return
         d = pd.DataFrame([dict(Stock=k, **v) for k, v in metrics.items()])
         d = d.sort_values('R²', ascending=False)
-        fig, ax = plt.subplots(figsize=(16,6))
+        fig, ax = plt.subplots(figsize=(16, 6))
         ax.bar(d['Stock'], d['R²'], color='steelblue')
         ax.set_xticklabels(d['Stock'], rotation=90)
         ax.set_title("Test R² by Stock")
@@ -22,7 +23,7 @@ class Visualizer:
         plt.close()
 
     def plot_portfolio_allocations(self, portfolios):
-        fig, ax = plt.subplots(figsize=(8,8))
+        fig, ax = plt.subplots(figsize=(8, 8))
         for name, port in portfolios.items():
             w = port['weights']
             ax.plot(np.sort(w)[::-1], label=name)
@@ -36,7 +37,7 @@ class Visualizer:
     def plot_future_predictions(self, predictions, stock_data):
         outdir = os.path.join(self.config.outputs_dir, "plots")
         for symbol, pred_df in predictions.items():
-            plt.figure(figsize=(10,4))
+            plt.figure(figsize=(10, 4))
             plt.plot(stock_data[symbol]['Date'], stock_data[symbol]['Close'], label='History')
             plt.plot(pred_df['Date'], pred_df['Predicted_Close'], 'r--', label='Predicted')
             plt.title(symbol)

@@ -2,6 +2,7 @@ import os
 import joblib
 import numpy as np
 
+
 class PortfolioRecommender:
     def __init__(self, models_dir, symbols, config):
         self.symbols = symbols
@@ -10,7 +11,6 @@ class PortfolioRecommender:
         self.models = {}
         self.xscalers = {}
         self.yscalers = {}
-        self.features = ['Close', 'Return', 'SMA10', 'SMA20', 'EMA10', 'Volatility10', 'VolumeChange', 'RSI14']
         from keras.models import load_model
         for symbol in self.symbols:
             try:
@@ -21,6 +21,7 @@ class PortfolioRecommender:
                 self.xscalers[symbol] = joblib.load(xscaler_path)
                 self.yscalers[symbol] = joblib.load(yscaler_path)
             except Exception:
+                # Could log here for debugging if needed
                 continue
 
     def predict(self, preferences):

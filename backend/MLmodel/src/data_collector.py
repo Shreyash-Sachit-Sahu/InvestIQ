@@ -1,8 +1,9 @@
 import yfinance as yf
 import pandas as pd
+import numpy as np
 import logging
 import time
-import numpy as np
+
 
 class StockDataCollector:
     def __init__(self, config):

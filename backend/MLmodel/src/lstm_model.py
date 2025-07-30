@@ -8,6 +8,7 @@ import joblib
 import logging
 import os
 
+
 class LSTMPreprocessor:
     def __init__(self, lookback_window=30):
         self.lookback_window = lookback_window
@@ -28,6 +29,7 @@ class LSTMPreprocessor:
     def train_test_split(self, X, y, train_ratio=0.8):
         split = int(len(X) * train_ratio)
         return X[:split], X[split:], y[:split], y[split:]
+
 
 class LSTMModel:
     def __init__(self, input_shape):
@@ -67,6 +69,7 @@ class LSTMModel:
         r2 = r2_score(y_true, y_pred)
         return {"MSE": mse, "MAE": mae, "RMSE": np.sqrt(mse), "R²": r2}
 
+
 class LSTMModelTrainer:
     def __init__(self, config):
         self.config = config
@@ -78,26 +81,27 @@ class LSTMModelTrainer:
 
     def train_all_models(self, stock_data):
         models, metrics = {}, {}
+        os.makedirs(self.config.models_dir, exist_ok=True)
         for symbol, data in stock_data.items():
             if not all(f in data.columns for f in self.features):
+                self.logger.warning(f"Skipping {symbol} due to missing features.")
                 continue
             X, y, scaler, y_scaler = self.preprocessor.prepare_lstm_data(data, self.features, 'Close')
             X_train, X_test, y_train, y_test = self.preprocessor.train_test_split(X, y, self.config.train_ratio)
             model = LSTMModel((X_train.shape[1], X_train.shape[2]))
             model.train(X_train, y_train, X_test, y_test, epochs=self.config.epochs, batch_size=self.config.batch_size)
             y_pred = model.predict(X_test)
-            # Inverse transform predictions for metrics
             y_test_inv = y_scaler.inverse_transform(y_test.reshape(-1, 1)).flatten()
             y_pred_inv = y_scaler.inverse_transform(y_pred.reshape(-1, 1)).flatten()
             met = model.evaluate_model(y_test_inv, y_pred_inv)
             models[symbol] = {
-                'model': model.model, 
-                'scaler': scaler, 
+                'model': model.model,
+                'scaler': scaler,
                 'y_scaler': y_scaler
             }
             metrics[symbol] = met
-            joblib.dump(scaler, f"models/{symbol}_xscaler.pkl")
-            joblib.dump(y_scaler, f"models/{symbol}_yscaler.pkl")
-            model.model.save(f"models/{symbol}_lstm_model.h5")
-            self.logger.info(f"{symbol}: R²={met['R²']:.2f} RMSE={met['RMSE']:.2f}")
+            joblib.dump(scaler, os.path.join(self.config.models_dir, f"{symbol}_xscaler.pkl"))
+            joblib.dump(y_scaler, os.path.join(self.config.models_dir, f"{symbol}_yscaler.pkl"))
+            model.model.save(os.path.join(self.config.models_dir, f"{symbol}_lstm_model.h5"))
+            self.logger.info(f"{symbol}: R²={met['R²']:.2f}, RMSE={met['RMSE']:.2f}")
         return models, metrics

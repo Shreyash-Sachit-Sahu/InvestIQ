@@ -1,6 +1,7 @@
 import os
-import pandas as pd
 import pickle
+import pandas as pd
+
 
 def setup_directories():
     directories = [
@@ -9,6 +10,7 @@ def setup_directories():
     ]
     for d in directories:
         os.makedirs(d, exist_ok=True)
+
 
 def save_results(models, portfolios, predictions, metrics, stock_data):
     with open('models/models.pkl', 'wb') as f:
@@ -19,6 +21,7 @@ def save_results(models, portfolios, predictions, metrics, stock_data):
         pickle.dump(predictions, f)
     pd.DataFrame([dict(Stock=k, **v) for k, v in metrics.items()]).to_csv(
         "outputs/model_performance.csv", index=False)
+
 
 def generate_report(models, portfolios, predictions, metrics, stock_data):
     with open('outputs/reports/comprehensive_report.txt', 'w') as f:
