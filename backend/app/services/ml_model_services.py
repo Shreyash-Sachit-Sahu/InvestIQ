@@ -59,9 +59,15 @@ class PredictionModelWrapper:
         if is_pred_dict:
             for strat in strategies:
                 for symbol, pred_df in self.pred_data.items():
+                    if not isinstance(pred_df, pd.DataFrame):
+                        current_app.logger.warning(f"Prediction data for symbol {symbol} is not a DataFrame.")
+                        continue
                     if strat not in pred_df.columns:
                         continue
                     try:
+                        if "Date" not in pred_df.columns:
+                            current_app.logger.warning(f"'Date' column missing in predictions for symbol {symbol}.")
+                            continue
                         last_date = pred_df["Date"].max()
                         latest_pred_df = pred_df[pred_df["Date"] == last_date]
                         if latest_pred_df.empty:
@@ -84,10 +90,17 @@ class PredictionModelWrapper:
                                 "confidence": 90,
                                 "portfolio_metrics": portfolio_metrics,
                             })
-                    except Exception:
+                    except Exception as e:
+                        current_app.logger.error(f"Error processing prediction for {symbol}: {str(e)}")
                         continue
         else:
             try:
+                if not isinstance(self.pred_data, pd.DataFrame):
+                    return {"error": "Predictions data is not a valid DataFrame."}
+
+                if "Date" not in self.pred_data.columns:
+                    return {"error": "Predictions DataFrame missing 'Date' column."}
+
                 last_date = self.pred_data["Date"].max()
                 latest_preds = self.pred_data[self.pred_data["Date"] == last_date]
                 if latest_preds.empty:
@@ -102,6 +115,7 @@ class PredictionModelWrapper:
                         "insights": ["No predictions available for the latest date."],
                     }
             except Exception as e:
+                current_app.logger.error(f"Error reading predictions DataFrame: {str(e)}")
                 return {"error": f"Error processing prediction dates: {str(e)}"}
 
             for portfolio_name in strategies:
@@ -126,7 +140,8 @@ class PredictionModelWrapper:
                             "confidence": 90,
                             "portfolio_metrics": portfolio_metrics,
                         })
-                except Exception:
+                except Exception as e:
+                    current_app.logger.error(f"Error processing portfolio {portfolio_name}: {str(e)}")
                     continue
 
         aggregated_recs = {}
@@ -164,8 +179,11 @@ def get_ai_recommendations(preferences):
     portfolios_path = os.path.join(model_dir, "portfolios.pkl")
 
     if not os.path.exists(predictions_path):
+        current_app.logger.error(f"Predictions file missing: {predictions_path}")
         return {"error": f"Predictions file not found at {predictions_path}"}
+
     if not os.path.exists(portfolios_path):
+        current_app.logger.error(f"Portfolios file missing: {portfolios_path}")
         return {"error": f"Portfolios file not found at {portfolios_path}"}
 
     try:
@@ -176,15 +194,18 @@ def get_ai_recommendations(preferences):
             current_app.logger.info(f"Predictions columns: {predictions_data.columns.tolist()}")
         elif isinstance(predictions_data, dict):
             current_app.logger.info(f"Predictions dict keys: {list(predictions_data.keys())}")
+
         current_app.logger.info(f"Loaded portfolios data type: {type(portfolios_data)}")
         if hasattr(portfolios_data, "index"):
             current_app.logger.info(f"Portfolios index: {portfolios_data.index}")
         elif isinstance(portfolios_data, dict):
             current_app.logger.info(f"Portfolios keys: {list(portfolios_data.keys())}")
     except Exception as e:
+        current_app.logger.error(f"Error loading model files: {str(e)}")
         return {"error": f"Unable to load prediction files: {str(e)}"}
 
     recommender = PredictionModelWrapper(predictions_data, portfolios_data)
     investment_goal = preferences.get("investment_goal") or ""
     risk_tolerance = preferences.get("risk_tolerance")  # Optional
+
     return recommender.predict(investment_goal, risk_tolerance)
