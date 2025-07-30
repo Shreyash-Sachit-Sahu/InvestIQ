@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, current_app
 from time import time
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services.ml_model_services import get_ai_recommendations
-from app.utils.contract_mapping import (
+from app.helper.contract_mapping import (
     make_success_response,
     make_error_response,
     yfinance_enrich,
