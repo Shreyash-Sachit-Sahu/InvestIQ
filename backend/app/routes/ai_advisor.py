@@ -20,19 +20,24 @@ def recommend_nse():
     
     start_time = time()
     user_id = get_jwt_identity()
-    if user_id is None:
-        # Enforce auth or handle anonymous access here
-        return jsonify(make_error_response(
-            "Authentication token required for this endpoint.",
-            None,
-            int((time() - start_time) * 1000)
-        )), 401
 
     preferences = request.get_json()
+    if not preferences or not isinstance(preferences, dict):
+        return jsonify(make_error_response(
+            "Missing JSON payload.", user_id, int((time() - start_time) * 1000)
+        )), 400
 
     investment_goal = preferences.get("investment_goal")
+    if not investment_goal or not isinstance(investment_goal, str) or not investment_goal.strip():
+        return jsonify(make_error_response(
+            "Missing or invalid 'investment_goal'.", user_id, int((time() - start_time) * 1000)
+        )), 422
 
     risk_tolerance = preferences.get("risk_tolerance")
+    if risk_tolerance is not None and not isinstance(risk_tolerance, str):
+        return jsonify(make_error_response(
+            "'risk_tolerance' must be a string if provided.", user_id, int((time() - start_time) * 1000)
+        )), 422
 
     try:
         engine_result = get_ai_recommendations(preferences)
