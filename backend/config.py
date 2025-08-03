@@ -1,15 +1,39 @@
 import os
-import ast
+from datetime import timedelta
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'dev_secret_key')
-    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'dev_jwt_secret')
-
-    SQLALCHEMY_DATABASE_URI = os.environ.get('SQLALCHEMY_DATABASE_URI',
-                                            'sqlite:///instance/investiq.db')  # fallback only locally
-
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    
+    # Database Configuration
+    DATABASE_URL = os.environ.get('DATABASE_URL')
+    if DATABASE_URL and DATABASE_URL.startswith('postgres://'):
+        DATABASE_URL = DATABASE_URL.replace('postgres://', 'postgresql://', 1)
+    
+    SQLALCHEMY_DATABASE_URI = DATABASE_URL or 'sqlite:///investiq.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    JWT_ACCESS_TOKEN_EXPIRES = int(os.environ.get('JWT_ACCESS_TOKEN_EXPIRES', 900))
-    JWT_REFRESH_TOKEN_EXPIRES = int(os.environ.get('JWT_REFRESH_TOKEN_EXPIRES', 2592000))
-    MODEL_DIR = os.path.abspath(os.environ.get('MODEL_DIR', '../MLmodel/models/'))
-    CORS_ORIGINS = ast.literal_eval(os.environ.get('CORS_ORIGINS', '["http://localhost:3000"]'))
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+    }
+    
+    # JWT Configuration
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY') or SECRET_KEY
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+    
+    # Redis Configuration
+    REDIS_URL = os.environ.get('REDIS_URL') or 'redis://localhost:6379'
+    
+    # ML Model Configuration
+    MODEL_VERSION = os.environ.get('MODEL_VERSION', 'v1.0.0')
+    MODEL_PATH = os.path.join(os.path.dirname(__file__), 'models')
+    
+    # API Configuration
+    CORS_ORIGINS = ['http://localhost:3000', 'https://your-frontend-domain.com']
+    
+    # NSE Data Configuration
+    NSE_API_DELAY = 15  # minutes
+    ALPHA_VANTAGE_KEY = os.environ.get('ALPHA_VANTAGE_KEY')
