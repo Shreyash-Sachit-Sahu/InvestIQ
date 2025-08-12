@@ -34,6 +34,7 @@ class Config:
     # API Configuration
     CORS_ORIGINS = ['http://localhost:3000', 'https://your-frontend-domain.com']
     
-    # NSE Data Configuration
-    NSE_API_DELAY = 15  # minutes
-    ALPHA_VANTAGE_KEY = os.environ.get('ALPHA_VANTAGE_KEY')
+    # Financial Modeling Prep API Configuration
+    FMP_API_KEY = os.environ.get('FMP_API_KEY')
+    FMP_DAILY_LIMIT = 250  # Free tier limit
+    FMP_BASE_URL = 'https://financialmodelingprep.com/api/v3'
