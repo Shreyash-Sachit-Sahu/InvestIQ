@@ -8,7 +8,6 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    name = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
@@ -27,7 +26,6 @@ class User(db.Model):
         return {
             'id': self.id,
             'email': self.email,
-            'name': self.name,
             'created_at': self.created_at.isoformat(),
             'is_active': self.is_active
         }
