@@ -5,6 +5,7 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 import redis
 from config import Config
+import os
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -21,7 +22,11 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     
     # Configure CORS
-    CORS(app, origins=app.config['CORS_ORIGINS'])
+    CORS(
+    app,
+    resources={r"/api/*": {"origins": os.environ.get("CORS_ORIGINS").split(",")}},
+    supports_credentials=True
+    )
     
     # Initialize Redis
     try:
