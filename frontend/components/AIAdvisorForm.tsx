@@ -5,7 +5,12 @@ import Button from "./Button"
 import { DollarSign, Target, TrendingUp } from "lucide-react"
 
 interface AIAdvisorFormProps {
-  onSubmit: (preferences: { investment_goal: string; risk_tolerance: string }) => void
+  onSubmit: (preferences: {
+    investment_amount: number
+    risk_tolerance: string
+    primary_goal: string
+    age?: string
+  }) => void
   isLoading: boolean
 }
 
@@ -37,13 +42,27 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
     }
   }
 
-  // Ensure string coercion for backend compatibility
+  // Parse investmentAmount string to number (extract lower bound from range)
+  const parseInvestmentAmount = (amountStr: string): number => {
+    if (!amountStr) return 0
+    if (amountStr.includes("-")) {
+      const lowerBound = amountStr.split("-")[0].replace(/[^\d]/g, "")
+      return Number(lowerBound) || 0
+    }
+    // For values like "2500000+"
+    const digits = amountStr.replace(/[^\d]/g, "")
+    return Number(digits) || 0
+  }
+
   const handleSubmit = (e?: React.FormEvent | React.MouseEvent) => {
     if (e) e.preventDefault()
 
     const payload = {
-      investment_goal: String(mapPrimaryGoal(preferences.primaryGoal) ?? ""),
-      risk_tolerance: String(preferences.riskTolerance ?? ""),
+      investment_amount: parseInvestmentAmount(preferences.investmentAmount),
+      risk_tolerance: preferences.riskTolerance,
+      primary_goal: mapPrimaryGoal(preferences.primaryGoal),
+      // Uncomment if backend expects age
+      // age: preferences.age
     }
 
     onSubmit(payload)
@@ -59,7 +78,9 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
         </label>
         <select
           value={preferences.investmentAmount}
-          onChange={(e) => setPreferences((prev) => ({ ...prev, investmentAmount: e.target.value }))}
+          onChange={(e) =>
+            setPreferences((prev) => ({ ...prev, investmentAmount: e.target.value }))
+          }
           className="w-full px-3 py-2 border border-gray-300 rounded-lg"
           required
         >
@@ -86,7 +107,9 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
               type="button"
               onClick={() => setPreferences((prev) => ({ ...prev, riskTolerance: risk }))}
               className={`p-3 rounded-lg border text-sm text-center font-medium ${
-                preferences.riskTolerance === risk ? "bg-blue-500 text-white" : "bg-white text-gray-700"
+                preferences.riskTolerance === risk
+                  ? "bg-blue-500 text-white"
+                  : "bg-white text-gray-700"
               }`}
             >
               {risk.charAt(0).toUpperCase() + risk.slice(1)}
@@ -103,7 +126,9 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
         </label>
         <select
           value={preferences.primaryGoal}
-          onChange={(e) => setPreferences((prev) => ({ ...prev, primaryGoal: e.target.value }))}
+          onChange={(e) =>
+            setPreferences((prev) => ({ ...prev, primaryGoal: e.target.value }))
+          }
           className="w-full px-3 py-2 border border-gray-300 rounded-lg"
           required
         >
