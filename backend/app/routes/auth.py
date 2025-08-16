@@ -15,7 +15,7 @@ def register():
         data = request.get_json()
         
         # Validate input
-        if not data or not all(k in data for k in ('email', 'password', 'name')):
+        if not data or not all(k in data for k in ('email', 'password')):
             return jsonify({
                 'success': False,
                 'message': 'Email, password, and name are required'
@@ -23,7 +23,6 @@ def register():
         
         email = data['email'].strip().lower()
         password = data['password']
-        name = data['name'].strip()
         
         # Validate email format
         if not validate_email(email):
@@ -47,7 +46,7 @@ def register():
             }), 409
         
         # Create new user
-        user = User(email=email, name=name)
+        user = User(email=email)
         user.set_password(password)
         
         db.session.add(user)
