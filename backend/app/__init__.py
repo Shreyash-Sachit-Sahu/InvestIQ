@@ -25,7 +25,6 @@ def create_app(config_class=Config):
     CORS(
     app,
     resources={r"/api/*": {"origins": os.environ.get("CORS_ORIGINS").split(",")}},
-    supports_credentials=True
     )
     
     # Initialize Redis
