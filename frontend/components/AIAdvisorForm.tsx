@@ -7,7 +7,7 @@ import { DollarSign, Target, TrendingUp } from "lucide-react"
 interface AIAdvisorFormProps {
   onSubmit: (preferences: {
     investment_amount: number
-    risk_tolerance: string
+    risk_tolerance: number
     primary_goal: string
     age?: string
   }) => void
@@ -22,27 +22,24 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
     age: "",
   })
 
-  // Map UI goals to backend expected strings
-  const mapPrimaryGoal = (goal: string): string => {
-    switch (goal) {
-      case "growth":
-        return "capital growth"
-      case "income":
-        return "regular income"
-      case "balanced":
-        return "balanced growth and income"
-      case "preservation":
-        return "capital preservation"
-      case "retirement":
-        return "retirement planning"
-      case "tax-saving":
-        return "elss"
-      default:
-        return "capital growth"
-    }
+  // Map risk tolerance string to backend expected integer
+  const riskToleranceMap: Record<string, number> = {
+    conservative: 1,
+    moderate: 2,
+    aggressive: 3,
   }
 
-  // Parse investmentAmount string to number (extract lower bound from range)
+  // Map primaryGoal string to backend expected values
+  const primaryGoalMap: Record<string, string> = {
+    growth: "growth",
+    income: "income",
+    balanced: "balanced",
+    preservation: "preservation",
+    retirement: "growth",    // fallback mapping
+    "tax-saving": "growth",  // fallback mapping
+  }
+
+  // Parse investment amount string to a positive number (lower bound of range)
   const parseInvestmentAmount = (amountStr: string): number => {
     if (!amountStr) return 0
     if (amountStr.includes("-")) {
@@ -57,10 +54,14 @@ export default function AIAdvisorForm({ onSubmit, isLoading }: AIAdvisorFormProp
   const handleSubmit = (e?: React.FormEvent | React.MouseEvent) => {
     if (e) e.preventDefault()
 
+    const investment_amount = parseInvestmentAmount(preferences.investmentAmount)
+    const risk_tolerance = riskToleranceMap[preferences.riskTolerance] || 2
+    const primary_goal = primaryGoalMap[preferences.primaryGoal] || "growth"
+
     const payload = {
-      investment_amount: parseInvestmentAmount(preferences.investmentAmount),
-      risk_tolerance: preferences.riskTolerance,
-      primary_goal: mapPrimaryGoal(preferences.primaryGoal),
+      investment_amount,
+      risk_tolerance,
+      primary_goal,
       // Uncomment if backend expects age
       // age: preferences.age
     }
