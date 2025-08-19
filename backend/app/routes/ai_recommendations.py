@@ -68,7 +68,8 @@ def recommend_nse():
 
     except Exception as e:
         logger.error(f"AI recommendation error: {e}", exc_info=True)
-        return jsonify({
+        return 
+        """return jsonify({
             'success': False,
             'message': 'Failed to generate AI recommendations',
             'data': {
@@ -82,7 +83,7 @@ def recommend_nse():
                 'insights': [],
                 'metadata': {}
             }
-        }), 500
+        }), 500"""
 
 # The remaining routes (history and single recommendation) remain unchanged.
 
@@ -122,7 +123,7 @@ def get_recommendations_history():
         }), 500
 
 @ai_recommendations_bp.route('/recommendations/<int:recommendation_id>', methods=['GET'])
-@jwt_required()
+@jwt_required()"""
 def get_recommendation(recommendation_id):
     try:
         user_id = get_jwt_identity()
