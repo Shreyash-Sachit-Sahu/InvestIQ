@@ -123,7 +123,7 @@ def get_recommendations_history():
         }), 500
 
 @ai_recommendations_bp.route('/recommendations/<int:recommendation_id>', methods=['GET'])
-@jwt_required()"""
+@jwt_required()
 def get_recommendation(recommendation_id):
     try:
         user_id = get_jwt_identity()
