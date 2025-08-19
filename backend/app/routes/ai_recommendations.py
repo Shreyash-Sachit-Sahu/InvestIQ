@@ -15,29 +15,30 @@ def recommend_nse():
     try:
         user_id = get_jwt_identity()
         data = request.get_json()
-        
+
         if not data:
-            return jsonify({
-                'success': False,
-                'message': 'No preferences provided'
-            }), 400
-        
-        # Validate user preferences
+            logger.info("No preferences provided, returning 400")
+            return jsonify({'success': False, 'message': 'No preferences provided'}), 400
+
         if not validate_user_preferences(data):
-            return jsonify({
-                'success': False,
-                'message': 'Invalid user preferences format'
-            }), 400
-        
-        # Generate AI recommendations
+            logger.info("Invalid preferences format, returning 400")
+            return jsonify({'success': False, 'message': 'Invalid user preferences format'}), 400
+
         recommendations = current_app.ml_service.generate_ai_recommendations(data)
-        
+        logger.info(f"Recommendations (type={type(recommendations)}): {recommendations}")
+
+        # Handle tuple returns explicitly
+        if isinstance(recommendations, tuple):
+            logger.warning("Recommendations is a tuple, returning with status code")
+            return jsonify(recommendations[0]), recommendations[1]
+
         if not recommendations:
-            return jsonify({
-                'success': False,
-                'message': 'Failed to generate recommendations'
-            }), 500
-        
+            logger.info("Empty recommendations, returning 500")
+            return jsonify({'success': False, 'message': 'Failed to generate recommendations'}), 500
+
+        portfolio_size = len(recommendations.get('portfolio', []))
+        logger.info(f"Portfolio size: {portfolio_size}")
+
         # Save recommendations to database
         try:
             rec_record = Recommendation(
@@ -47,26 +48,26 @@ def recommend_nse():
                 model_version=recommendations.get('metadata', {}).get('modelVersion', 'v1.0.0'),
                 confidence_score=85.0  # Default confidence score
             )
-            
+
             db.session.add(rec_record)
             db.session.commit()
-            
+
             # Add recommendation ID to metadata
             recommendations['metadata']['recommendationId'] = rec_record.id
             recommendations['metadata']['userId'] = f'user_{user_id}'
-            
+
         except Exception as e:
             logger.warning(f"Failed to save recommendation to database: {e}")
             # Continue without saving to database
-        
+
         return jsonify({
             'success': True,
             'data': recommendations,
             'message': 'AI recommendations generated successfully'
         })
-        
+
     except Exception as e:
-        logger.error(f"AI recommendation error: {e}")
+        logger.error(f"AI recommendation error: {e}", exc_info=True)
         return jsonify({
             'success': False,
             'message': 'Failed to generate AI recommendations',
@@ -82,6 +83,8 @@ def recommend_nse():
                 'metadata': {}
             }
         }), 500
+
+# The remaining routes (history and single recommendation) remain unchanged.
 
 @ai_recommendations_bp.route('/recommendations/history', methods=['GET'])
 @jwt_required()
