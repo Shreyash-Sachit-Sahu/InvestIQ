@@ -1,133 +1,353 @@
+I can’t attach a binary file directly in this chat, but here’s a ready-to-save README.md. Copy everything between the lines into a file named README.md in your repo root.
 
-```markdown
+---------------------------------------
+# InvestIQ — AI-Powered NSE Portfolio Recommendations
 
-  🚀 InvestIQ: Intelligent NSE Portfolio Platform
-  
-    Your all-in-one tool for Indian stock market investing.
-    AI-powered recommendations, seamless NSE portfolio management, and interactive dashboards for modern investors.
-  
-  
-  
-  
-  
-  
-  
+Smarter investments powered by AI. Get data-driven insights and personalized NSE portfolio recommendations to maximize your returns in the Indian stock market.
 
+## Table of Contents
 
----
+- Overview
+- Features
+- Architecture
+- Technology Stack
+- Prerequisites
+- Installation & Setup
+  - Backend
+  - Frontend
+  - Running with Docker (optional)
+- Configuration
+- Usage
+- API Endpoints
+- Data & Models
+- Database Schema
+- Development
+- Deployment
+- Monitoring & Logs
+- Troubleshooting
+- Security Notes
+- Roadmap
+- Contributing
+- License
 
-## 🧑‍💻 About InvestIQ
+## Overview
 
-**InvestIQ** is a Python/JS monorepo for the modern Indian stock investor:
-- 🧠 AI-driven stock portfolio advisor
-- 📊 Real-time NSE portfolio analytics
-- 📁 Fast CSV import, easy dashboard, and data explorer
+InvestIQ is a full-stack application that generates personalized stock portfolios for Indian investors using AI and quantitative modeling. It fetches NSE stock data, scores securities, optimizes allocations with a mean-variance approach, and evaluates risk to deliver actionable insights aligned with an investor’s goal and risk tolerance.
 
----
+Core value:
+- Personalized portfolios in minutes
+- Transparent reasoning and risk metrics
+- Repeatable and extensible ML pipeline
 
-## 🗂️ Monorepo Structure
+## Features
 
-```
-investiq/
-│
-├── backend/      # Flask REST API, user auth, data upload, ML pipeline endpoints
-├── MLmodel/      # Model training, scikit-learn recommender, mock data generator
-├── frontend/     # Next.js/React app: dashboards, forms, charts, tables
-├── README.md
-└── ...
-```
+- AI recommendations tailored to:
+  - investment_amount
+  - risk_tolerance (1=conservative, 2=moderate, 3=aggressive)
+  - primary_goal (growth, income, balanced, preservation)
+- Real-time NSE data ingestion with batching and retry resilience
+- Scoring via ensemble regressors (RandomForest/GBR) + engineered factors
+- Portfolio optimization using MPT (SLSQP with bounds/constraints)
+- Risk assessment (risk score, diversification, VaR, Sharpe, drawdown)
+- JWT-authenticated REST API
+- Recommendation history with pagination
+- Sensible fallbacks and defaults when live data is sparse/unavailable
 
-## 🚀 Quick Start
+## Architecture
 
-### 1. **Clone the repository**
+- Frontend: React app (SPA) consuming REST APIs
+- Backend: Flask app exposing auth and AI endpoints
+- Services:
+  - NSEDataService: loads stock universe, fetches/updates prices and fundamentals
+  - StockScoringModel: feature engineering, ensemble scoring
+  - PortfolioOptimizer: mean-variance weights with allocation constraints
+  - RiskAssessmentModel: risk metrics, diversification, VaR, Sharpe, drawdown
+  - MLService: orchestrates data → score → optimize → assess → package response
+- Database: SQLAlchemy models for NSEStock, Recommendation, etc.
+- Auth: JWT-based
 
-```
-git clone https://github.com/yourusername/investiq.git
-cd investiq
-```
+## Technology Stack
 
-### 2. **Setup the Backend**
+- Backend: Python, Flask, SQLAlchemy
+- ML/Analytics: scikit-learn, numpy, pandas, scipy
+- Data: yfinance
+- DB: PostgreSQL (prod), SQLite (dev)
+- Frontend: React (Vite/CRA/Next, depending on your repo)
+- Auth: flask-jwt-extended
+- Deployment: Vercel (frontend), Render/Heroku/Fly.io (backend) or Docker
 
-```
-cd backend
-python3.11 -m venv myenv                # Create virtual environment
-source myenv/bin/activate               # On Windows: .\myenv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env                    # Edit secrets as needed
-python run.py                           # Starts Flask backend at :5000
-```
+## Prerequisites
 
-### 3. **Setup the ML model (optional if using AI features)**
+- Python 3.10+ recommended
+- Node.js 18+ and npm/yarn (for frontend)
+- PostgreSQL 13+ (or use SQLite for local dev)
+- Git
+- Optional: Docker & Docker Compose
 
-```
-cd ../MLmodel
-python3.11 -m venv myenv
-source myenv/bin/activate
-pip install -r requirements.txt
-# Train or place your ML model files in MLmodel/models/
-python main.py
-```
+## Installation & Setup
 
-### 4. **Setup the Frontend**
+### Backend
 
-```
-cd ../frontend
-npm install              # or yarn or pnpm install
-npm run dev              # or npm run build && npm start for production mode
-# Access at http://localhost:3000
-```
+1) Clone and enter:
+- git clone <your-backend-repo>
+- cd backend
 
----
+2) Create venv and install deps:
+- python -m venv venv
+- source venv/bin/activate  (Windows: venv\Scripts\activate)
+- pip install -r requirements.txt
 
-## 🔒 Security
+3) Environment variables: copy .env.example to .env and set values:
+- FLASK_ENV=development
+- SECRET_KEY=change_me
+- DATABASE_URL=postgresql://user:pass@localhost:5432/investiq
+- JWT_SECRET_KEY=change_me
+- YFINANCE_BASE_DELAY=2
+- YFINANCE_BATCH_SIZE=12
 
-- Store secrets in `.env` (see `.env.example` for structure)
-- JWT is used for authentication and all protected routes.
-- CORS is securely configured to allow only recognized frontends.
+4) Initialize DB:
+- flask db upgrade
+  or if using Alembic/Flask-Migrate equivalent
+- If you have a seeding script: python init_data.py
 
----
+5) Run backend:
+- flask run
+  or
+- python wsgi.py / python app.py depending on your entrypoint
 
-## 💡 Features
+### Frontend
 
-- ✅ User Registration & Login (JWT-based)
-- ✅ Upload, parse & manage NSE portfolios via CSV
-- ✅ Real-time, AI-powered stock recommendations
-- ✅ In-app charts and analytics for Indian equities
-- ✅ Modular backend/ML/frontend code for rapid development
+1) Clone and enter:
+- git clone <your-frontend-repo>
+- cd frontend
 
----
+2) Install deps:
+- npm install
 
-## 🛠 Tech stack
+3) Set API base URL in env (e.g., VITE_API_URL or NEXT_PUBLIC_API_URL):
+- cp .env.example .env
+- Update API URL to point to your backend (http://localhost:5000)
 
-- **Backend:** Flask, Flask-JWT-Extended, Flask-SQLAlchemy, pandas (Python 3.11+)
-- **Frontend:** Next.js, React, Tailwind CSS
-- **ML:** scikit-learn, pandas, joblib for recommender engine
-- **Dev:** Docker-ready, VSCode config, .env for secrets
+4) Start dev server:
+- npm run dev (or npm start as per your setup)
 
----
+### Running with Docker (optional)
 
-## 🤝 Contributing
+Provide a docker-compose.yml like:
+- services:
+  - api:
+    - build: ./backend
+    - ports: "5000:5000"
+    - env_file: backend/.env
+  - db:
+    - image: postgres:14
+    - ports: "5432:5432"
+    - environment: POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD
+  - web:
+    - build: ./frontend
+    - ports: "3000:3000"
+    - env_file: frontend/.env
 
-1. Fork this repo 🍴
-2. Clone your fork:
-   ```
-   git clone https://github.com/shreyash-sachit-sahu/investiq.git
-   ```
-3. Create your feature branch:
-   ```
-   git checkout -b my-feature
-   ```
-4. Commit, push, and [open a Pull Request](https://github.com/yourusername/investiq/pulls)!
+Usage:
+- docker compose up --build
 
----
+## Configuration
 
-## 📄 License
+Key backend envs:
+- SECRET_KEY, JWT_SECRET_KEY
+- DATABASE_URL
+- YFINANCE_BASE_DELAY, YFINANCE_BATCH_SIZE, YFINANCE_MAX_RETRIES
+- LOG_LEVEL=INFO|DEBUG
 
-This project is open source and available under the [MIT License](LICENSE).
+Frontend envs:
+- API base URL variable (e.g., VITE_API_URL)
 
----
+## Usage
 
+1) Authenticate (signup/login) to obtain a JWT.
+2) Call POST /api/ai/recommend-nse with:
+- {
+  "investment_amount": 100000,
+  "risk_tolerance": 2,
+  "primary_goal": "growth"
+}
+3) Receive recommended portfolio with risk metrics and insights.
+4) View history via GET /api/ai/recommendations/history.
 
-  Made with ❤️ by shreyashsachitsahu & the InvestIQ Community
+## API Endpoints
 
-```
+Auth
+- POST /api/auth/signup
+- POST /api/auth/login
+
+AI
+- POST /api/ai/recommend-nse  (JWT required)
+  - Body:
+    - investment_amount: number > 0
+    - risk_tolerance: 1|2|3
+    - primary_goal: growth|income|balanced|preservation
+- GET /api/ai/recommendations/history (JWT)
+- GET /api/ai/recommendations/<id> (JWT)
+
+Stocks (optional public)
+- GET /api/nse/stocks
+- GET /api/nse/stock/<symbol>
+
+Response shape (recommend-nse, success):
+- {
+  "success": true,
+  "data": {
+    "portfolio": [ ... ],
+    "summary": {
+      "totalExpectedReturn": number,
+      "portfolioRiskScore": number,
+      "diversificationScore": number,
+      "alignmentScore": number
+    },
+    "insights": [string],
+    "metadata": {
+      "generatedAt": ISO8601,
+      "modelVersion": "vX.Y.Z",
+      "dataSource": "NSE",
+      "processingTime": ms,
+      "stocksAnalyzed": number,
+      "recommendationId": number,
+      "userId": "user_<id>"
+    }
+  }
+}
+
+## Data & Models
+
+NSEDataService:
+- Loads NSE symbols from JSON
+- Fetches data via yfinance with batching & retries
+- Persists to DB, converts to dicts for scoring
+
+StockScoringModel:
+- Feature engineering: PE, dividend, beta, market cap, momentum, quality/value, sector score
+- Ensemble of RandomForestRegressor + GradientBoostingRegressor
+- Synthetic training fallback if data sparse
+- Outputs combined score and supporting fields
+
+PortfolioOptimizer:
+- Constructs covariance proxy and optimizes weights with SLSQP
+- Constraints: weights sum to 1, min/max per stock
+- Risk aversion adjusts by user risk_tolerance
+- Produces allocation, expectedReturn, reasoning, riskScore
+
+RiskAssessmentModel:
+- Portfolio risk score (weighted), diversification (HHI + stock count), VaR, volatility, beta, Sharpe, drawdown
+- Sensible defaults if portfolio empty
+
+MLService:
+- Orchestrates data retrieval → scoring → optimization → risk → response
+- Provides defaults if live data unavailable
+
+## Database Schema
+
+- nse_stocks:
+  - symbol, company_name, sector, current_price, market_cap, pe_ratio, dividend_yield, beta, last_updated
+- recommendations:
+  - id, user_id, preferences (JSON), recommendations (JSON), model_version, confidence_score, created_at
+- users: (standard auth fields)
+
+Migrations managed via Flask-Migrate/Alembic.
+
+## Development
+
+- Tests:
+  - pytest
+- Lint/format:
+  - flake8 .
+  - black .
+  - isort .
+- Migrations:
+  - flask db migrate -m "message"
+  - flask db upgrade
+- Useful tips:
+  - Seed DB before recommending
+  - Use Postman collections for API testing
+  - Enable DEBUG logs during dev
+
+## Deployment
+
+- Frontend: deploy to Vercel (configure API base URL env)
+- Backend: deploy to Render/Heroku/Fly (set env vars, run migrations)
+- Database: managed PostgreSQL (Neon, RDS, Render, etc.)
+- Set LOG_LEVEL=INFO or WARNING in production
+
+## Monitoring & Logs
+
+- Standard Flask logging
+- Add request IDs and structured JSON logs if desired
+- Capture errors from yfinance (rate limiting) and database exceptions
+
+## Troubleshooting
+
+422 Unprocessable Entity:
+- Ensure request JSON is valid:
+  - investment_amount > 0 (number)
+  - risk_tolerance in[1][2][3]
+  - primary_goal in [growth,income,balanced,preservation]
+- Confirm backend receives JSON (Content-Type: application/json)
+- Verify the AI route logs show non-empty data flow:
+  - fetched stock count
+  - scored count
+  - portfolio length
+- If needed, log the exact value/type returned from generate_ai_recommendations
+
+Empty/Small Portfolio:
+- Seed or update stock DB (init_data/update jobs)
+- Review filters in scoring; relax thresholds if overly aggressive
+- Ensure optimizer bounds are not too tight given top_stocks count
+
+yfinance Rate Limits:
+- Increase base delays and batch sleeps
+- Reduce batch size temporarily
+- Retry with exponential backoff already in place
+
+Auth Issues:
+- JWT secrets must be set
+- Token expiry and clock skew considerations
+
+## Security Notes
+
+- Keep SECRET_KEY and JWT_SECRET_KEY secure
+- Never log sensitive tokens
+- Use HTTPS in production
+- Validate and sanitize all inputs at API boundary
+
+## Roadmap
+
+- Historical backtesting and scenario analysis
+- Sector/thematic overlays and constraints
+- Rebalancing suggestions and alerts
+- Export to CSV/PDF
+- Advanced factor models and explainability
+
+## Contributing
+
+1) Fork the repo
+2) Create a feature branch
+3) Write tests and run lint/format
+4) Submit a PR with context and screenshots where helpful
+
+## License
+
+MIT License. See LICENSE for details.
+---------------------------------------
+
+If you want, I can also provide a minimal zipped archive structure with this README and starter folders, or generate a PDF from this Markdown with step-by-step commands you can run locally.
+
+[1](https://invest-iq-blush.vercel.app)
+[2](https://www.pdfforge.org/online/en/markdown-to-pdf)
+[3](https://www.markdowntopdf.com)
+[4](https://cloudconvert.com/md-to-docx)
+[5](https://stackoverflow.com/questions/17630486/how-to-convert-a-markdown-file-to-pdf)
+[6](https://www.npmjs.com/package/md-to-pdf)
+[7](https://linangdata.com/pdf-generator/)
+[8](https://apitemplate.io/pdf-tools/convert-markdown-to-pdf/)
+[9](https://md-to-pdf.fly.dev)
+[10](https://marketplace.visualstudio.com/items?itemName=yzane.markdown-pdf)
+[11](https://markdowntohtml.com)
