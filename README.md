@@ -1,5 +1,3 @@
-I can’t attach a binary file directly in this chat, but here’s a ready-to-save README.md. Copy everything between the lines into a file named README.md in your repo root.
-
 ---------------------------------------
 # InvestIQ — AI-Powered NSE Portfolio Recommendations
 
@@ -337,17 +335,3 @@ Auth Issues:
 
 MIT License. See LICENSE for details.
 ---------------------------------------
-
-If you want, I can also provide a minimal zipped archive structure with this README and starter folders, or generate a PDF from this Markdown with step-by-step commands you can run locally.
-
-[1](https://invest-iq-blush.vercel.app)
-[2](https://www.pdfforge.org/online/en/markdown-to-pdf)
-[3](https://www.markdowntopdf.com)
-[4](https://cloudconvert.com/md-to-docx)
-[5](https://stackoverflow.com/questions/17630486/how-to-convert-a-markdown-file-to-pdf)
-[6](https://www.npmjs.com/package/md-to-pdf)
-[7](https://linangdata.com/pdf-generator/)
-[8](https://apitemplate.io/pdf-tools/convert-markdown-to-pdf/)
-[9](https://md-to-pdf.fly.dev)
-[10](https://marketplace.visualstudio.com/items?itemName=yzane.markdown-pdf)
-[11](https://markdowntohtml.com)
