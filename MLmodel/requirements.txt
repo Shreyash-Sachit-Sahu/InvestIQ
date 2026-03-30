@@ -1,0 +1,15 @@
+fastapi>=0.104.0
+uvicorn>=0.24.0
+yfinance>=0.2.32
+pandas>=2.2.0
+numpy>=1.26.0
+scikit-learn>=1.4.0
+matplotlib>=3.8.0
+joblib>=1.3.0
+scipy>=1.12.0
+tensorflow>=2.16.0
+ 
+# sqlite3 is included in Python's stdlib — no install needed.
+# For Postgres support, uncomment the line below:
+psycopg2-binary>=2.9.0
+ 
