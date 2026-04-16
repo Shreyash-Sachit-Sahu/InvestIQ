@@ -9,6 +9,13 @@ const aiAdvisorRoutes = require('./src/routes/aiAdvisor');
 const nseDataRoutes   = require('./src/routes/nseData');
 const { errorHandler, notFoundHandler } = require('./src/middleware/errorHandler');
 
+// ── Security middleware ───────────────────────────────────────────────────────
+const { securityHeaders }                = require('./src/middleware/securityHeaders');
+const { globalLimiter, authLimiter }      = require('./src/middleware/rateLimiter');
+const { sanitizeInput, hppProtection }   = require('./src/middleware/inputSanitizer');
+const { requestLogger }                  = require('./src/middleware/requestLogger');
+const { uploadGuard }                    = require('./src/middleware/uploadGuard');
+
 const prisma = new PrismaClient();
 const app    = express();
 
@@ -22,9 +29,20 @@ app.use(cors({
   credentials: true,
 }));
 
+// ── Security layers ──────────────────────────────────────────────────────────
+app.use(securityHeaders);
+app.use(requestLogger);
+app.use(globalLimiter);
+app.use('/api/auth', authLimiter);
+app.use(uploadGuard);
+app.use(hppProtection);
+
 // ── Body parsing ──────────────────────────────────────────────────────────────
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// ── Input sanitization (runs after body is parsed) ────────────────────────────
+app.use(sanitizeInput);
 
 // ── Attach Prisma to every request ────────────────────────────────────────────
 app.use((req, _res, next) => {
